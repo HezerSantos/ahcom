@@ -1,0 +1,38 @@
+services:
+  dynamodb:
+      image: amazon/dynamodb-local
+      container_name: dynamodb
+      user: root
+      ports:
+        - "8000:8000"
+      volumes:
+        - ./dynamodb/data:/home/dynamodblocal/data
+      command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data"
+      environment:
+        - AWS_ACCESS_KEY_ID=test
+        - AWS_REGION=us-east-1
+        - AWS_SECRET_ACCESS_KEY=test
+  identity-service:
+    container_name: identity
+    user: root
+    ports:
+      - "3000:3000"
+    volumes:
+      -./services/trust-service:/app
+    env_file:
+      - .env
+    depends_on:
+      - dynamodb
+  
+  content-service:
+    container_name: content
+    ports:
+      -"3001:3001"
+    volumes:
+      -./services/content-service:/app
+      -./services/content-service/node_modules:/app/node_modules
+    depends_on:
+      - dynamodb
+    env_file:
+      - .env
+    
