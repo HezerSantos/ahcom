@@ -1,6 +1,9 @@
 package main
 
 import (
+	"alhcom/identity/routes"
+	"alhcom/identity/services"
+
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -36,7 +39,12 @@ func main() {
 	if err != nil {
 		panic("ENV FILE IS NOT LOADED")
 	}
-	r := gin.Default()
+	services.RegisterDynamoDBClient()
+
+	r := gin.New()
 	r.SetTrustedProxies(trustedProxies)
+
+	api := r.Group("/api")
+	routes.ProcessRoutes(api)
 	r.Run(":3000")
 }

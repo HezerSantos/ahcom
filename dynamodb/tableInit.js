@@ -1,6 +1,9 @@
-const { DynamoDBClient, CreateTableCommand, AttributeDefinition$, BillingMode } = require("@aws-sdk/client-dynamodb")
+const { DynamoDBClient, CreateTableCommand } = require("@aws-sdk/client-dynamodb")
+const dotenv = require('dotenv')
 
-const initTable = () => {
+dotenv.config()
+
+const initTable = async() => {
     const client = new DynamoDBClient({region: "us-east-1", endpoint: "http://localhost:8000"})
     const params = {
         AttributeDefinitions: [
@@ -27,4 +30,12 @@ const initTable = () => {
         BillingMode: "PAY_PER_REQUEST"
     }
     const createTableCommand = new CreateTableCommand(params)
-}
+
+    try{
+        await client.send(createTableCommand)
+    } catch(e) {
+        console.error(e)
+    }
+} 
+
+initTable()
