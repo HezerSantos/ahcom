@@ -9,4 +9,5 @@ import (
 func AuthRouter(api *gin.RouterGroup) {
 	authRouter := api.Group("/auth")
 	authRouter.POST("/register", handlers.RegisterUser)
+	authRouter.POST("/login", handlers.LoginUser)
 }
