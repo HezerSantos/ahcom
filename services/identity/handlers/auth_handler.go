@@ -155,3 +155,32 @@ func LoginUser(c *gin.Context) {
 		"msg": "Login Successful",
 	})
 }
+
+func LogoutUser(c *gin.Context) {
+	authCookie, err := c.Cookie("__Secure-secure-auth.access")
+
+	if err != nil {
+		helpers.AuthError(c, "SECURE AUTH COOKIE IS MISSING", "/auth/logout")
+		return
+	}
+
+	domain := ""
+
+	if os.Getenv("GO_ENV") == "production" {
+		domain = ".hallowedvisions.com"
+	}
+
+	c.SetCookie(
+		"__Secure-secure-auth.access",
+		authCookie,
+		-1,
+		"/",
+		domain,
+		true,
+		true,
+	)
+
+	c.JSON(200, gin.H{
+		"msg": "User logged out",
+	})
+}
