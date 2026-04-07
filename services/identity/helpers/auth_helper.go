@@ -16,7 +16,7 @@ import (
 )
 
 func GenerateUserJWT(userId uuid.UUID, email string, exp int) (string, error) {
-	var SECURE_AUTH_SECRET = []byte(os.Getenv("AUTH_SECRET"))
+	var SECURE_AUTH_SECRET = []byte(os.Getenv("SECURE_AUTH_SECRET"))
 	claims := jwt.MapClaims{
 		"sub":   userId,
 		"email": email,
@@ -67,6 +67,9 @@ func AuthenticateUser(reqBody *LoginUserBodyJSON) (*models.UserModel, error) {
 		return nil, fmt.Errorf("FAILED TO QUERY USER EMAIL DATA")
 	}
 
+	if len(userEmailData.Item) == 0 {
+		return nil, nil
+	}
 	userId, ok := userEmailData.Item["userId"]
 
 	if !ok {

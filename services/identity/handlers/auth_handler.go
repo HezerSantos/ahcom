@@ -142,7 +142,7 @@ func LoginUser(c *gin.Context) {
 		domain = ".hallowedvisions.com"
 	}
 	c.SetCookie(
-		"__Secure-secure-auth.access",
+		"__Secure-auth.access",
 		userJwt,
 		60*1000*60,
 		"/",
@@ -157,7 +157,7 @@ func LoginUser(c *gin.Context) {
 }
 
 func LogoutUser(c *gin.Context) {
-	authCookie, err := c.Cookie("__Secure-secure-auth.access")
+	authCookie, err := c.Cookie("__Secure-auth.access")
 
 	if err != nil {
 		helpers.AuthError(c, "SECURE AUTH COOKIE IS MISSING", "/auth/logout")

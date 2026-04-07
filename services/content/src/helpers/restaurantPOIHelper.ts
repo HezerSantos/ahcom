@@ -1,12 +1,12 @@
 import axios, { AxiosError } from 'axios';
 import dotenv from 'dotenv'
+import redisClient from '../services/redisService';
 dotenv.config()
 
 type POICache = Map<string, any[]>
 type GetTileType = (lat: number, lon: number) => [number, number]
 type HaverSineType = (lat1: number, lon1: number, lat2: number, lon2: number) => number
 type FetchPOIsType = (
-    cache: POICache,
     lat: number,
     lon: number,
     radius?: number,
@@ -48,7 +48,7 @@ const haversine: HaverSineType = (lat1, lon1, lat2, lon2) => {
 /**
  * Fetch POIs from HERE with grid-based caching
  */
-export const fetchPOIs: FetchPOIsType = async(cache, lat, lon, radius = 1000, categories = '100-1000', limit = 20) => {
+export const fetchPOIs: FetchPOIsType = async(lat, lon, radius = 1000, categories = '100-1000', limit = 20) => {
     // Get tile coordinates
     const [x, y] = getTile(lat, lon)
     const allNearbyResults = [];
@@ -57,8 +57,8 @@ export const fetchPOIs: FetchPOIsType = async(cache, lat, lon, radius = 1000, ca
     for (let dx = -1; dx <= 1; dx++) {
         for (let dy = -1; dy <= 1; dy++) {
             const key = `${x+dx}:${y+dy}`;
-            const tileEntries = cache.get(key);
-
+            let tileEntriesCached = await redisClient.lRange(key, 0, -1);
+            const tileEntries = tileEntriesCached.map(item => JSON.parse(item))
             if (tileEntries) {
                 for (const entry of tileEntries) {
                     if (haversine(lat, lon, entry.lat, entry.lon) <= CACHE_THRESHOLD_METERS) {
@@ -88,7 +88,6 @@ export const fetchPOIs: FetchPOIsType = async(cache, lat, lon, radius = 1000, ca
 
         const sorted = Array.from(uniqueMap.values()).sort((a, b) => a.distance - b.distance);
         console.log("CACHE HIT")
-        console.log(cache)
         return [true, sorted.slice(0, limit)];
     }
 
@@ -108,11 +107,11 @@ export const fetchPOIs: FetchPOIsType = async(cache, lat, lon, radius = 1000, ca
 
         // Cache it
         const tileKey = `${x}:${y}`;
-        const newAnchor = { lat, lon, radius, results };
+        const newAnchor = JSON.stringify({ lat, lon, radius, results });
         
-        const existingEntries = cache.get(tileKey) || [];
-        existingEntries.push(newAnchor);
-        cache.set(tileKey, existingEntries);
+        await redisClient.rPush(tileKey, newAnchor);
+        await redisClient.expire(tileKey, 3600)
+
         return [true, results];
     } catch (e) {
         const axiosError = e as AxiosError

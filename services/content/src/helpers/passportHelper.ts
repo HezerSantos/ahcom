@@ -1,6 +1,6 @@
 import passport from "passport";
 import { Strategy as JwtStrategy} from "passport-jwt"
-import { NextFunction, Request } from "express";
+import { NextFunction, Request, Response } from "express";
 import dotenv from 'dotenv'
 import { GetItemCommand } from "@aws-sdk/client-dynamodb";
 import dynamodbClient from "../services/dynamodbService";
@@ -29,10 +29,9 @@ passport.use(new JwtStrategy(opts, async function(jwt_payload, done) {
             TableName: "AHCOM",
             Key: {
                 PK: {S: `USER#${jwt_payload.sub}`},
-                SK: {S: `PROFILE#${jwt_payload.sub}`}
+                SK: {S: `PROFILE`}
             }
         }
-
         const userGetItemCommand = new GetItemCommand(params)
 
         const userQueryResult = await dynamodbClient.send(userGetItemCommand)

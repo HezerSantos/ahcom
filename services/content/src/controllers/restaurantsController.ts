@@ -1,22 +1,23 @@
 import { RequestHandler } from "express";
 import { fetchPOIs } from "../helpers/restaurantPOIHelper";
-import { GetItemCommand, GetItemCommandInput, PutItemCommand, PutItemCommandInput, TransactWriteItem, TransactWriteItemsCommand, TransactWriteItemsInput } from "@aws-sdk/client-dynamodb";
-import uuid from 'uuid'
+import { GetItemCommand, GetItemCommandInput, PutItemCommandInput, TransactWriteItem, TransactWriteItemsCommand, TransactWriteItemsInput } from "@aws-sdk/client-dynamodb";
+import { validate } from 'uuid'
 import throwError from "../helpers/errorHelper";
 import axios, { AxiosError } from "axios";
 import dotenv from 'dotenv'
 import dynamodbClient from "../services/dynamodbService";
 dotenv.config()
 
-const poiCache = new Map<string, any>()
-
 export const getRestaurantPOIs: RequestHandler = async(req, res, next) => {
     try{
-        console.log("RUN")
-        const lat = parseFloat(req.body.lat)
-        const lon = parseFloat(req.body.lon)
+        if (req.query.lat === undefined || req.query.lon === undefined){
+            throwError("ERROR BINDING BODY LAT AND LON @ /restaurants", 400, {code:"INVALID_BODY", msg:"Bad Request"})
+            return
+        }
+        const lat = parseFloat(String(req.query.lat))
+        const lon = parseFloat(String(req.query.lon))
 
-        const poiResults = await fetchPOIs(poiCache, lat, lon)
+        const poiResults = await fetchPOIs(lat, lon)
 
         if (!poiResults[0]) {
             next(poiResults[1])
@@ -25,25 +26,31 @@ export const getRestaurantPOIs: RequestHandler = async(req, res, next) => {
         console.log(poiResults[1].length)
         res.status(200).json({poiResults: poiResults[1]})
     } catch (error) {
-        console.error(error)
         next(error)
     }
 
 
 }
 
+interface DynamoRestaurantInfo {
+    id: { S: string };
+    name: { S: string };
+    address: { S: string };
+    lat: { S: string };
+    lng: { S: string };
+    categories: { L: any[] }; // Using 'L' for List since you mentioned it's an array
+}
 
 export const saveRestaurantPOI: RequestHandler = async(req, res, next) => {
     try{
         //Checks to see if the uuid on USER OBJECT is valid
         //Probably is and redundant but checks
-        if (!uuid.validate(req.user?.id)) {
+        if (!validate (req.user?.id)) {
             throwError("ERROR VALIDATING USER ID ON SAVE RESTAURANT @ /restaurant/save", 401, {code: "INVALID_USER", msg:"Unauthorized"})
             return
         }
 
         const restaurantId = req.body.restaurantId
-
 
 
 
@@ -77,22 +84,29 @@ export const saveRestaurantPOI: RequestHandler = async(req, res, next) => {
                 urlParams.append("apiKey", String(process.env.HERE_SECRET))
                 const restaurantQuery = await axios.get("https://lookup.search.hereapi.com/v1/lookup", { params: urlParams })
                 const restaurantInfo = restaurantQuery.data
-                
+
+                const parsedCategories = restaurantInfo.categories.map((item:{name: string}) => {
+                    return {S: item.name}
+                })
                 parsedRestaurantInfo = {
-                    id: {S:restaurantInfo.id},
-                    lat: {S:restaurantInfo.position.lat},
-                    lng: {S:restaurantInfo.position.lng},
-                    name: {S:restaurantInfo.title},
-                    address: {S:restaurantInfo.address.label},
-                    operationHours: {S:restaurantInfo.openingHours[1].text},
-                    categories: {S:restaurantInfo.categories}
+                    info: {
+                        M: {
+                            id: {S:restaurantInfo.id},
+                            lat: {S:restaurantInfo.position.lat},
+                            lng: {S:restaurantInfo.position.lng},
+                            name: {S:restaurantInfo.title},
+                            address: {S:restaurantInfo.address.label},
+                            categories: {L: parsedCategories}
+                        }
+                    }
                 }
             } catch (e) {
                 const axiosError = e as AxiosError
+                console.log(axiosError)
                 if (axiosError.status === 404){
                     throwError("ERROR FINDING UNKNOWN RESTAURANT @ /restaurant/save", 404, {code:"INVALID_BODY", msg:"Restaurant Not Found"})
                 } else {
-                    throwError("AXIOS NETWORK ERROR @ /restaurant/save", 500, {code:"INVALID_SERVER", msg:"Error fetching restaurant"})
+                    throwError("AXIOS NETWORK ERROR @ /restaurant/save", axiosError.status || 500, {code:"INVALID_SERVER", msg:"Error fetching restaurant"})
                 }
             }
         }
@@ -102,16 +116,16 @@ export const saveRestaurantPOI: RequestHandler = async(req, res, next) => {
             throwError("ERROR PARSING RESTAURANT INFO", 500, {code:"INVALID_SERVER", msg:"Internal Server Error"})
             return
         }
-        
-        const transactItemsList: TransactWriteItem[] = []
 
+        const transactItemsList: TransactWriteItem[] = []
         //ADD the Restaurant ID to User in DynamoDB
         const putUserItemInput: PutItemCommandInput = {
             TableName: "AHCOM",
             Item: {
                 "PK": {S: `USER#${req.user?.id}`},
-                "SK": {S: `RESTAURANT#${parsedRestaurantInfo.id.S}`}
-            }
+                "SK": {S: `RESTAURANT#${parsedRestaurantInfo.info.M?.id.S}`}
+            },
+            ConditionExpression: "attribute_not_exists(PK)"
         }
 
         transactItemsList.push({Put: putUserItemInput})
@@ -121,10 +135,11 @@ export const saveRestaurantPOI: RequestHandler = async(req, res, next) => {
             const putRestaurantItemInput: PutItemCommandInput = {
                 TableName: "AHCOM",
                 Item: {
-                    "PK": {S: `RESTAURANT#${parsedRestaurantInfo.id.S}`},
+                    "PK": {S: `RESTAURANT#${parsedRestaurantInfo.info.M?.id.S}`},
                     "SK": {S: `RESTAURANT`},
                     "info": {M: {...parsedRestaurantInfo} }
-                }
+                },
+                ConditionExpression: "attribute_not_exists(PK)"
             }
             transactItemsList.push({Put: putRestaurantItemInput})
         }
@@ -139,12 +154,13 @@ export const saveRestaurantPOI: RequestHandler = async(req, res, next) => {
         res.status(200).json(
             {
                 progress: `${runHEREQuery? "HERE API" : "DYNAMODB"} Ran`,
-                msg: `${parsedRestaurantInfo.name.S} has been added to your list`,
-                id: parsedRestaurantInfo.id.S
+                msg: `${parsedRestaurantInfo.info.M?.name.S} has been added to your list`,
+                id: parsedRestaurantInfo.info.M?.id.S
             }
         )
         
     } catch(error) {
+        console.error(error)
         next(error)
     }
 }

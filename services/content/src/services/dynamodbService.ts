@@ -4,7 +4,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 const dynamodbClient = new DynamoDBClient({
-    endpoint: "http://localhost:8000"
+    endpoint: "http://dynamodb:8000"
 })
 
 export default dynamodbClient
