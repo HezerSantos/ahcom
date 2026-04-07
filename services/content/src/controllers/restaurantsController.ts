@@ -32,14 +32,6 @@ export const getRestaurantPOIs: RequestHandler = async(req, res, next) => {
 
 }
 
-interface DynamoRestaurantInfo {
-    id: { S: string };
-    name: { S: string };
-    address: { S: string };
-    lat: { S: string };
-    lng: { S: string };
-    categories: { L: any[] }; // Using 'L' for List since you mentioned it's an array
-}
 
 export const saveRestaurantPOI: RequestHandler = async(req, res, next) => {
     try{
@@ -137,7 +129,7 @@ export const saveRestaurantPOI: RequestHandler = async(req, res, next) => {
                 Item: {
                     "PK": {S: `RESTAURANT#${parsedRestaurantInfo.info.M?.id.S}`},
                     "SK": {S: `RESTAURANT`},
-                    "info": {M: {...parsedRestaurantInfo} }
+                    "info": {M: {...parsedRestaurantInfo.info.M} }
                 },
                 ConditionExpression: "attribute_not_exists(PK)"
             }
@@ -160,6 +152,7 @@ export const saveRestaurantPOI: RequestHandler = async(req, res, next) => {
         )
         
     } catch(error) {
+        //TODO: ADD CONDITION PK CHECK AND HANDLE
         console.error(error)
         next(error)
     }
