@@ -3,7 +3,6 @@ import dotenv from 'dotenv'
 import redisClient from '../services/redisService';
 dotenv.config()
 
-type POICache = Map<string, any[]>
 type GetTileType = (lat: number, lon: number) => [number, number]
 type HaverSineType = (lat1: number, lon1: number, lat2: number, lon2: number) => number
 type FetchPOIsType = (

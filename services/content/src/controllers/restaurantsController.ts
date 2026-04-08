@@ -1,8 +1,8 @@
 import { RequestHandler } from "express";
 import { fetchPOIs } from "../helpers/restaurantPOIHelper";
-import { GetItemCommand, GetItemCommandInput, PutItemCommandInput, TransactWriteItem, TransactWriteItemsCommand, TransactWriteItemsInput } from "@aws-sdk/client-dynamodb";
+import { GetItemCommand, GetItemCommandInput, PutItemCommandInput, TransactionCanceledException, TransactWriteItem, TransactWriteItemsCommand, TransactWriteItemsInput } from "@aws-sdk/client-dynamodb";
 import { validate } from 'uuid'
-import throwError from "../helpers/errorHelper";
+import throwError, { returnError } from "../helpers/errorHelper";
 import axios, { AxiosError } from "axios";
 import dotenv from 'dotenv'
 import dynamodbClient from "../services/dynamodbService";
@@ -11,7 +11,7 @@ dotenv.config()
 export const getRestaurantPOIs: RequestHandler = async(req, res, next) => {
     try{
         if (req.query.lat === undefined || req.query.lon === undefined){
-            throwError("ERROR BINDING BODY LAT AND LON @ /restaurants", 400, {code:"INVALID_BODY", msg:"Bad Request"})
+            throwError("ERROR BINDING BODY LAT AND LON", 400, __filename, {code:"INVALID_BODY", msg:"Bad Request"})
             return
         }
         const lat = parseFloat(String(req.query.lat))
@@ -38,7 +38,7 @@ export const saveRestaurantPOI: RequestHandler = async(req, res, next) => {
         //Checks to see if the uuid on USER OBJECT is valid
         //Probably is and redundant but checks
         if (!validate (req.user?.id)) {
-            throwError("ERROR VALIDATING USER ID ON SAVE RESTAURANT @ /restaurant/save", 401, {code: "INVALID_USER", msg:"Unauthorized"})
+            throwError("ERROR VALIDATING USER ID ON SAVE RESTAURANT", 401, __filename, {code: "INVALID_USER", msg:"Unauthorized"})
             return
         }
 
@@ -96,16 +96,16 @@ export const saveRestaurantPOI: RequestHandler = async(req, res, next) => {
                 const axiosError = e as AxiosError
                 console.log(axiosError)
                 if (axiosError.status === 404){
-                    throwError("ERROR FINDING UNKNOWN RESTAURANT @ /restaurant/save", 404, {code:"INVALID_BODY", msg:"Restaurant Not Found"})
+                    throwError("ERROR FINDING UNKNOWN RESTAURANT", 404, __filename, {code:"INVALID_BODY", msg:"Restaurant Not Found"})
                 } else {
-                    throwError("AXIOS NETWORK ERROR @ /restaurant/save", axiosError.status || 500, {code:"INVALID_SERVER", msg:"Error fetching restaurant"})
+                    throwError("AXIOS NETWORK ERROR", axiosError.status || 500, __filename, {code:"INVALID_SERVER", msg:"Error fetching restaurant"})
                 }
             }
         }
 
         //Type Check to ENSURE that parsedRestaurantInfo is populated
         if (!parsedRestaurantInfo) {
-            throwError("ERROR PARSING RESTAURANT INFO", 500, {code:"INVALID_SERVER", msg:"Internal Server Error"})
+            throwError("ERROR PARSING RESTAURANT INFO", 500, __filename, {code:"INVALID_SERVER", msg:"Internal Server Error"})
             return
         }
 
@@ -152,7 +152,15 @@ export const saveRestaurantPOI: RequestHandler = async(req, res, next) => {
         )
         
     } catch(error) {
-        //TODO: ADD CONDITION PK CHECK AND HANDLE
+        if (error instanceof TransactionCanceledException) {
+            if (error.CancellationReasons && error.CancellationReasons.length > 0){
+                if (error.CancellationReasons[0].Code === 'ConditionalCheckFailed'){
+                    const newError = returnError(`The conditional request failed`, 400, __filename, {code:"INVALID_BODY", msg:"Restaurant already saved"})
+                    next(newError)
+                    return
+                }
+            }
+        }
         console.error(error)
         next(error)
     }
