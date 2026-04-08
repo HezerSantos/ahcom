@@ -33,7 +33,7 @@ func RegisterUser(c *gin.Context) {
 		TableName: aws.String("AHCOM"),
 		Key: map[string]types.AttributeValue{
 			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("EMAIL#%s", ReqBody.Email)},
-			"SK": &types.AttributeValueMemberS{Value: "EMAIL"},
+			"SK": &types.AttributeValueMemberS{Value: "METADATA"},
 		},
 	}
 
@@ -65,7 +65,7 @@ func RegisterUser(c *gin.Context) {
 		TableName: aws.String("AHCOM"),
 		Item: map[string]types.AttributeValue{
 			"PK":       &types.AttributeValueMemberS{Value: fmt.Sprintf("USER#%s", newUserId)},
-			"SK":       &types.AttributeValueMemberS{Value: "PROFILE"},
+			"SK":       &types.AttributeValueMemberS{Value: "METADATA"},
 			"password": &types.AttributeValueMemberS{Value: passwordHash},
 			"email":    &types.AttributeValueMemberS{Value: ReqBody.Email},
 		},
@@ -75,7 +75,7 @@ func RegisterUser(c *gin.Context) {
 		TableName: aws.String("AHCOM"),
 		Item: map[string]types.AttributeValue{
 			"PK":     &types.AttributeValueMemberS{Value: fmt.Sprintf("EMAIL#%s", ReqBody.Email)},
-			"SK":     &types.AttributeValueMemberS{Value: "EMAIL"},
+			"SK":     &types.AttributeValueMemberS{Value: "METADATA"},
 			"userId": &types.AttributeValueMemberS{Value: fmt.Sprint(newUserId)},
 		},
 		ConditionExpression: aws.String("attribute_not_exists(PK)"),

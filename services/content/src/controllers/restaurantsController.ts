@@ -54,7 +54,7 @@ export const saveRestaurantPOI: RequestHandler = async(req, res, next) => {
             TableName: "AHCOM",
             Key: {
                 "PK": {S: `RESTAURANT#${restaurantId}`},
-                "SK": {S: `RESTAURANT`}
+                "SK": {S: `METADATA`}
             }
         }
 
@@ -128,7 +128,7 @@ export const saveRestaurantPOI: RequestHandler = async(req, res, next) => {
                 TableName: "AHCOM",
                 Item: {
                     "PK": {S: `RESTAURANT#${parsedRestaurantInfo.info.M?.id.S}`},
-                    "SK": {S: `RESTAURANT`},
+                    "SK": {S: `METADATA`},
                     "info": {M: {...parsedRestaurantInfo.info.M} }
                 },
                 ConditionExpression: "attribute_not_exists(PK)"
