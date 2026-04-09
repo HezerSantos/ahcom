@@ -24,7 +24,11 @@ export const getRestaurantPOIs: RequestHandler = async(req, res, next) => {
             return
         }
         console.log(poiResults[1].length)
-        res.status(200).json({poiResults: poiResults[1]})
+        res.status(200).json({
+            success: true,
+            message: "Restaurants retrieved successfully",
+            poiResults: poiResults[1]
+        } as ResponseJSON)
     } catch (error) {
         next(error)
     }
@@ -145,10 +149,11 @@ export const saveRestaurantPOI: RequestHandler = async(req, res, next) => {
 
         res.status(200).json(
             {
+                success: true,
                 progress: `${runHEREQuery? "HERE API" : "DYNAMODB"} Ran`,
-                msg: `${parsedRestaurantInfo.info.M?.name.S} has been added to your list`,
+                message: `${parsedRestaurantInfo.info.M?.name.S} has been added to your list`,
                 id: parsedRestaurantInfo.info.M?.id.S
-            }
+            } as ResponseJSON
         )
         
     } catch(error) {

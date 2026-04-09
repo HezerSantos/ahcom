@@ -3,8 +3,9 @@ import { createReviewValidator } from "../validators/reviewValidator";
 import { validationResult } from "express-validator";
 import throwError from "../helpers/errorHelper";
 import { validate } from "uuid";
-import { PutItemCommandInput } from "@aws-sdk/client-dynamodb";
+import { PutItemCommand, PutItemCommandInput } from "@aws-sdk/client-dynamodb";
 import { v7 } from 'uuid'
+import dynamodbClient from "../services/dynamodbService";
 export const createReview: RequestHandler[] = [
     ...createReviewValidator,
     async(req, res, next) => {
@@ -23,18 +24,29 @@ export const createReview: RequestHandler[] = [
             }
 
             const newReviewId = v7()
+            const shardNumber = Math.floor(Math.random() * 10) + 1
             const putReviewItemInput: PutItemCommandInput = {
                 TableName: "AHCOM",
                 Item: {
                     "PK": { S: `RESTAURANT#${req.params.restaurantId}`},
                     "SK": { S: `REVIEW#${newReviewId}`},
+                    "GSI1_PK": { S: `REVIEWSHARD#${shardNumber}`},
+                    "GSI1_SK": { S: `REVIEW#${newReviewId}`},
+                    "GSI2_PK": { S: `USER#${userId}`},
+                    "GSI2_SK": { S: `REVIEW#${newReviewId}`},
                     "rating": { N: String(req.body.rating) },
                     "review": { S: String(req.body.review) },
                     "userId": { S: userId }
                 }
             }
 
+            const putReviewItemCommand = new PutItemCommand(putReviewItemInput)
+            await dynamodbClient.send(putReviewItemCommand)
 
+            res.status(201).json({
+                "success": true,
+                "message": `Created Review For Restaurant ${req.params.restaurantId}`
+            })
         } catch(error) {
             next(error)
         }

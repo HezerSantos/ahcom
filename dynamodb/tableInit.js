@@ -59,16 +59,24 @@ const updateTable = async() => {
             {
                 AttributeName: "GSI1_SK",
                 AttributeType: "S"
+            },
+            {
+                AttributeName: "GSI2_PK",
+                AttributeType: "S"
+            },
+            {
+                AttributeName: "GSI2_SK",
+                AttributeType: "S"
             }
         ],
         TableName: "AHCOM",
         GlobalSecondaryIndexUpdates: [
         {
             Create: {
-                IndexName: "GSI1-index",
+                IndexName: "GSI2-index",
                 KeySchema: [
-                    { AttributeName: "GSI1_PK", KeyType: "HASH" },
-                    { AttributeName: "GSI1_SK", KeyType: "RANGE" }
+                    { AttributeName: "GSI2_PK", KeyType: "HASH" },
+                    { AttributeName: "GSI2_SK", KeyType: "RANGE" }
                 ],
                 Projection: { ProjectionType: "ALL" }
             }
