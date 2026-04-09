@@ -44,9 +44,9 @@ export const createReviewValidator = [
             const res = await dynamodbClient.send(getRestaurantItemCommand)
 
             if (res.Item !== undefined) {
-                req.custom.restaurant = res.Item
+                req.content.restaurant = res.Item
             } else {
-                req.custom.restaurant = null
+                req.content.restaurant = null
             }
             return true
         })
