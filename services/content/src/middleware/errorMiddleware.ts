@@ -2,6 +2,7 @@ import { ErrorRequestHandler } from "express";
 
 //@ts-ignore
 const errorMiddleware: ErrorRequestHandler = (err, req, res, next) => {
+    // console.log(err)
     console.error(`Error ${err.status || 500 }:`)
     console.error(`   Path: @${req.path}`)
     console.error(`   Filename: @${err.filename}`)

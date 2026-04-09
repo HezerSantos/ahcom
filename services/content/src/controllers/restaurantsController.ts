@@ -1,11 +1,12 @@
 import { RequestHandler } from "express";
 import { fetchPOIs, fetchRestaurantPOI } from "../helpers/restaurantPOIHelper";
-import { GetItemCommand, GetItemCommandInput, PutItemCommandInput, TransactionCanceledException, TransactWriteItem, TransactWriteItemsCommand, TransactWriteItemsInput } from "@aws-sdk/client-dynamodb";
+import { GetItemCommand, GetItemCommandInput, PutItemCommandInput, QueryCommand, QueryCommandInput, TransactionCanceledException, TransactWriteItem, TransactWriteItemsCommand, TransactWriteItemsInput } from "@aws-sdk/client-dynamodb";
 import { validate } from 'uuid'
 import throwError, { returnError } from "../helpers/errorHelper";
 import dotenv from 'dotenv'
 import dynamodbClient from "../services/dynamodbService";
 import { saveRestaurantValidator } from "../validators/restaurantValidator";
+import { validationResult } from "express-validator";
 dotenv.config()
 
 export const getRestaurantPOIs: RequestHandler = async(req, res, next) => {
@@ -41,6 +42,12 @@ export const saveRestaurantPOI: RequestHandler[] = [
     ...saveRestaurantValidator,
     async(req, res, next) => {
         try{
+            //Checkst express-validator for errors
+            const errors = validationResult(req)
+            if (!errors.isEmpty()) {
+                throwError("REQUEST BODY INVALID", 400, __filename, {code:"INVALID_BODY", msg:"Bad Request", validationErrors: errors.array()})
+                return
+            }
             //Checks to see if the uuid on USER OBJECT is valid
             //Probably is and redundant but checks
             if (!validate (req.user?.id)) {
@@ -56,21 +63,23 @@ export const saveRestaurantPOI: RequestHandler[] = [
             let parsedRestaurantInfo = null //Placeholder to overwrite with HERE API Data or DYNAMODB
 
             //Get restaurant item input from Dynamodb
-            const getRestaurantItemInput: GetItemCommandInput = {
+            const queryRestaurantItemInput: QueryCommandInput = {
                 TableName: "AHCOM",
-                Key: {
-                    "PK": {S: `RESTAURANT#${restaurantHEREId}`},
-                    "SK": {S: `METADATA`}
+                IndexName: "GSI1-index",
+                KeyConditionExpression: "GSI1_PK = :hereId",
+                ExpressionAttributeValues: {
+                    ":hereId": {S: `HERE#${restaurantHEREId}`}
                 }
             }
+            
 
             //Dynamodb Query to GET Restaurant Info
-            const getRestaurantItemCommand = new GetItemCommand(getRestaurantItemInput)
-            const getRestaurantInfo = await dynamodbClient.send(getRestaurantItemCommand)
+            const queryRestaurantItemCommand = new QueryCommand(queryRestaurantItemInput)
+            const queryRestaurantInfo = await dynamodbClient.send(queryRestaurantItemCommand)
         
             //Condition Check to see if restaurant EXISTS in DynamoDB
-            if (getRestaurantInfo.Item !== undefined) {
-                parsedRestaurantInfo = getRestaurantInfo.Item
+            if (queryRestaurantInfo.Items?.length) {
+                parsedRestaurantInfo = queryRestaurantInfo.Items[0]
                 runHEREQuery = false
             }
             
@@ -108,6 +117,8 @@ export const saveRestaurantPOI: RequestHandler[] = [
                     Item: {
                         "PK": {S: `RESTAURANT#${parsedRestaurantInfo.info.M?.id.S}`},
                         "SK": {S: `METADATA`},
+                        "GSI1_PK": {S: `HERE#${parsedRestaurantInfo.info.M?.hereId.S}`},
+                        "GSI1_SK": {S: `TIMESTAMP#${parsedRestaurantInfo.info.M?.id.S}`},
                         "info": {M: {...parsedRestaurantInfo.info.M} }
                     },
                     ConditionExpression: "attribute_not_exists(PK)"
@@ -141,7 +152,6 @@ export const saveRestaurantPOI: RequestHandler[] = [
                     }
                 }
             }
-            console.error(error)
             next(error)
         }
     }

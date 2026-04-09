@@ -32,13 +32,12 @@ export const createReview: RequestHandler[] = [
 
             //Final variable to overwrite that is type asserted
             let typedRestaurantInfo: RestaurantInfoType
-
             //Creates the restaurant record if it does not exist to attatch review
-            if (restaurantInfoBase === null) {
+            if (restaurantInfoBase === null) { //SHOULD NEVER RUN IF UUID DOES NOT EXIST OR IF HEREID GSI PK DOES EXIST
+                                               //MAKE SURE VALIDATION STEPS HANDLE THIS PROPERLY
                 //Use helper function to lookup with HERE ID with HERE API
-                const fetchPOIResult = await fetchRestaurantPOI(String(req.params.id), __filename)
-
-                //It returns RestaurantInfoType | undefined
+                const fetchPOIResult = await fetchRestaurantPOI(String(req.params.id), __filename) //Potentially creates duplicate
+                //It returns RestaurantInfoType | undefined                                        //Important to check if HEREID GSI PK Exists BEFORE RUNNING
                 if (fetchPOIResult !== undefined) {
                     //If it is not undefined then overwrite asserted variable
                     typedRestaurantInfo = fetchPOIResult
@@ -49,15 +48,18 @@ export const createReview: RequestHandler[] = [
                         Item: {
                             "PK": { S: `RESTAURANT#${typedRestaurantInfo.info.M.id.S}`},
                             "SK": { S: `METADATA` },
+                            "GSI1_PK": { S: `HERE#${typedRestaurantInfo.info.M.hereId.S}`},
+                            "GSI1_SK": { S: `TIMESTAMP#${typedRestaurantInfo.info.M.id.S}` },
                             "info": { M: {...typedRestaurantInfo.info.M} }
                         },
-                        ConditionExpression: "attribute_not_exists(PK)"
+                        ConditionExpression: "attribute_not_exists(PK)" //Probably never run cause the uuid will always be unique
                     }
 
                     try {
                         const putRestaurantItemCommand = new PutItemCommand(putRestaurantItemInput);
                         await dynamodbClient.send(putRestaurantItemCommand);
                     } catch (error: any) {
+                        console.log(error)
                         // If it already exists, that's fine! Just move on to posting the review.
                         if (error.name !== "ConditionalCheckFailedException") {
                             throw error; // Rethrow if it's a real error (like a 500 or network issue)
@@ -81,7 +83,6 @@ export const createReview: RequestHandler[] = [
                 throwError("USERID NOT UUID", 401, __filename, {code:"INVALID_USER", msg:"UNAUTHORIZED"})
                 return
             }
-
             //STOP GETTING CONFUSED:
             //THE SK FETCHES ALL REVIEWS FOR SPECIFIC RESTAURANT
             //THE GSI FETCHES EVERY SINGLE REVIEW EVER IN BUCKETS
@@ -97,7 +98,7 @@ export const createReview: RequestHandler[] = [
                     "GSI2_PK": { S: `USER#${userId}`},                              //PK UUID
                     "GSI2_SK": { S: `REVIEW#${newReviewId}`},                       //SK TIMESTAMP UUID V7
                     "rating": { N: String(req.body.rating) },   
-                    "review": { S: String(req.body.review) },
+                    "review": { S: String(req.body.reviewMessage) },
                     "userId": { S: userId }
                 }
             }

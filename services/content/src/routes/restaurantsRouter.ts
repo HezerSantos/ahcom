@@ -8,5 +8,5 @@ const restaurantsRouter = Router()
 
 restaurantsRouter.get("/", passportAuthenticate(), getRestaurantPOIs)
 restaurantsRouter.post("/:id/save", passportAuthenticate(), saveRestaurantPOI)
-restaurantsRouter.post("/:id/review", createReview)
+restaurantsRouter.post("/:id/review", passportAuthenticate(), createReview)
 export default restaurantsRouter

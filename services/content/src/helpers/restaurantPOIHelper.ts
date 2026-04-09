@@ -2,7 +2,7 @@ import axios, { AxiosError } from 'axios';
 import dotenv from 'dotenv'
 import redisClient from '../services/redisService';
 import throwError from './errorHelper';
-import { v7 } from 'uuid';
+import { v5, v7 } from 'uuid';
 import { AttributeValue } from '@aws-sdk/client-dynamodb';
 dotenv.config()
 
@@ -142,14 +142,17 @@ export const fetchRestaurantPOI: FetchRestaurantPOIType = async(restaurantId, fi
         const parsedCategories = restaurantInfo.categories.map((item:{name: string}) => {
             return {S: item.name}
         })
-        const newRestaurantId = v7()
+
+        const MY_NAMESPACE = '1b671a64-40d5-491e-99b0-da01ff1f3341';
+
+        const newRestaurantId = v5(restaurantInfo.id, MY_NAMESPACE)
         return {
             info: {
                 M: {
                     id: {S:newRestaurantId},
                     hereId: {S: restaurantInfo.id},
-                    lat: {S:restaurantInfo.position.lat},
-                    lng: {S:restaurantInfo.position.lng},
+                    lat: {S:restaurantInfo.position.lat ?? "0"},
+                    lng: {S:restaurantInfo.position.lng ?? "0"},
                     name: {S:restaurantInfo.title},
                     address: {S:restaurantInfo.address.label},
                     categories: {L: parsedCategories}
@@ -158,7 +161,6 @@ export const fetchRestaurantPOI: FetchRestaurantPOIType = async(restaurantId, fi
         }
     } catch (e) {
         const axiosError = e as AxiosError
-        console.log(axiosError)
         if (axiosError.status === 404){
             throwError("ERROR FINDING UNKNOWN RESTAURANT", 404, filename, {code:"INVALID_BODY", msg:"Restaurant Not Found"})
         } else {
