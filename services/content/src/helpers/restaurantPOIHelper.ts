@@ -1,6 +1,9 @@
 import axios, { AxiosError } from 'axios';
 import dotenv from 'dotenv'
 import redisClient from '../services/redisService';
+import throwError from './errorHelper';
+import { v7 } from 'uuid';
+import { AttributeValue } from '@aws-sdk/client-dynamodb';
 dotenv.config()
 
 type GetTileType = (lat: number, lon: number) => [number, number]
@@ -115,5 +118,51 @@ export const fetchPOIs: FetchPOIsType = async(lat, lon, radius = 1000, categorie
     } catch (e) {
         const axiosError = e as AxiosError
         return [false, axiosError];
+    }
+}
+
+
+interface RestaurantInfoType {
+    info: {
+        M: {
+            [key: string]: AttributeValue
+        }
+    }
+}
+type FetchRestaurantPOIType = (restaurantId: string, filename: string) => Promise<RestaurantInfoType | undefined>
+
+export const fetchRestaurantPOI: FetchRestaurantPOIType = async(restaurantId, filename) => {
+    try{
+        const urlParams = new URLSearchParams()
+        urlParams.append("id", restaurantId)
+        urlParams.append("apiKey", String(process.env.HERE_SECRET))
+        const restaurantQuery = await axios.get("https://lookup.search.hereapi.com/v1/lookup", { params: urlParams })
+        const restaurantInfo = restaurantQuery.data
+
+        const parsedCategories = restaurantInfo.categories.map((item:{name: string}) => {
+            return {S: item.name}
+        })
+        const newRestaurantId = v7()
+        return {
+            info: {
+                M: {
+                    id: {S:newRestaurantId},
+                    hereId: {S: restaurantInfo.id},
+                    lat: {S:restaurantInfo.position.lat},
+                    lng: {S:restaurantInfo.position.lng},
+                    name: {S:restaurantInfo.title},
+                    address: {S:restaurantInfo.address.label},
+                    categories: {L: parsedCategories}
+                }
+            }
+        }
+    } catch (e) {
+        const axiosError = e as AxiosError
+        console.log(axiosError)
+        if (axiosError.status === 404){
+            throwError("ERROR FINDING UNKNOWN RESTAURANT", 404, filename, {code:"INVALID_BODY", msg:"Restaurant Not Found"})
+        } else {
+            throwError("AXIOS NETWORK ERROR", axiosError.status || 500, filename, {code:"INVALID_SERVER", msg:"Error fetching restaurant"})
+        }
     }
 }

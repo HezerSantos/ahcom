@@ -3,6 +3,12 @@ import { body, param } from "express-validator";
 import { validate } from "uuid";
 import dynamodbClient from "../services/dynamodbService";
 
+const isHereId = (id: string): boolean => {
+  // Matches 'here:pds:place:' followed by exactly 32 alphanumeric/dash characters
+  const hereIdRegex = /^here:pds:place:[a-z0-9-]{32}$/i;
+  return hereIdRegex.test(id);
+};
+
 export const createReviewValidator = [
     body("reviewMessage")
         .trim()
@@ -16,14 +22,16 @@ export const createReviewValidator = [
         .trim()
         .custom( restaurantId => {
             const validId = validate(restaurantId)
-            if (!validId) {
-                throw new Error("INVALID RESTAURANT ID")
-            } else {
+            if (validId) {
                 return true
             }
+            if (isHereId(restaurantId)) {
+                return true
+            }
+            throw new Error("INVALID RESTAURANT ID")
         })
         .bail()
-        .custom( async(restaurantId) => {
+        .custom( async(restaurantId, {req}) => {
             const getRestaurantItemInput: GetItemCommandInput = {
                 TableName: "AHCOM",
                 Key: {
@@ -36,9 +44,10 @@ export const createReviewValidator = [
             const res = await dynamodbClient.send(getRestaurantItemCommand)
 
             if (res.Item !== undefined) {
-                return true
+                req.custom.restaurant = res.Item
             } else {
-                throw new Error("RESTAURANT DOES NOT EXIST")
+                req.custom.restaurant = null
             }
+            return true
         })
 ]

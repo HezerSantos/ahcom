@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
-import { fetchPOIs } from "../helpers/restaurantPOIHelper";
+import { fetchPOIs, fetchRestaurantPOI } from "../helpers/restaurantPOIHelper";
 import { GetItemCommand, GetItemCommandInput, PutItemCommandInput, TransactionCanceledException, TransactWriteItem, TransactWriteItemsCommand, TransactWriteItemsInput } from "@aws-sdk/client-dynamodb";
-import { validate } from 'uuid'
+import { v7, validate } from 'uuid'
 import throwError, { returnError } from "../helpers/errorHelper";
 import axios, { AxiosError } from "axios";
 import dotenv from 'dotenv'
@@ -46,7 +46,7 @@ export const saveRestaurantPOI: RequestHandler = async(req, res, next) => {
             return
         }
 
-        const restaurantId = req.body.restaurantId
+        const restaurantHEREId = req.body.hereId
 
 
 
@@ -57,7 +57,7 @@ export const saveRestaurantPOI: RequestHandler = async(req, res, next) => {
         const getRestaurantItemInput: GetItemCommandInput = {
             TableName: "AHCOM",
             Key: {
-                "PK": {S: `RESTAURANT#${restaurantId}`},
+                "PK": {S: `RESTAURANT#${restaurantHEREId}`},
                 "SK": {S: `METADATA`}
             }
         }
@@ -74,36 +74,9 @@ export const saveRestaurantPOI: RequestHandler = async(req, res, next) => {
         
         //If runHereQuery === true; RUN HERE API
         if (runHEREQuery) {
-            try{
-                const urlParams = new URLSearchParams()
-                urlParams.append("id", restaurantId)
-                urlParams.append("apiKey", String(process.env.HERE_SECRET))
-                const restaurantQuery = await axios.get("https://lookup.search.hereapi.com/v1/lookup", { params: urlParams })
-                const restaurantInfo = restaurantQuery.data
-
-                const parsedCategories = restaurantInfo.categories.map((item:{name: string}) => {
-                    return {S: item.name}
-                })
-                parsedRestaurantInfo = {
-                    info: {
-                        M: {
-                            id: {S:restaurantInfo.id},
-                            lat: {S:restaurantInfo.position.lat},
-                            lng: {S:restaurantInfo.position.lng},
-                            name: {S:restaurantInfo.title},
-                            address: {S:restaurantInfo.address.label},
-                            categories: {L: parsedCategories}
-                        }
-                    }
-                }
-            } catch (e) {
-                const axiosError = e as AxiosError
-                console.log(axiosError)
-                if (axiosError.status === 404){
-                    throwError("ERROR FINDING UNKNOWN RESTAURANT", 404, __filename, {code:"INVALID_BODY", msg:"Restaurant Not Found"})
-                } else {
-                    throwError("AXIOS NETWORK ERROR", axiosError.status || 500, __filename, {code:"INVALID_SERVER", msg:"Error fetching restaurant"})
-                }
+            const parsedRestaurantInfoResult = await fetchRestaurantPOI(restaurantHEREId, __filename)
+            if (parsedRestaurantInfoResult !== undefined) {
+                parsedRestaurantInfo = parsedRestaurantInfoResult
             }
         }
 
