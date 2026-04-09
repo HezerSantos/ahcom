@@ -95,10 +95,11 @@ func RegisterUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{
-		"msg":   "USER SUCCESSFULLY CREATED",
-		"id":    newUserId,
-		"email": ReqBody.Email,
+	c.JSON(201, gin.H{
+		"success": true,
+		"message": "USER SUCCESSFULLY CREATED",
+		"id":      newUserId,
+		"email":   ReqBody.Email,
 	})
 }
 
@@ -152,7 +153,8 @@ func LoginUser(c *gin.Context) {
 	)
 
 	c.JSON(200, gin.H{
-		"msg": "Login Successful",
+		"success": true,
+		"message": "Login Successful",
 	})
 }
 
@@ -181,6 +183,7 @@ func LogoutUser(c *gin.Context) {
 	)
 
 	c.JSON(200, gin.H{
-		"msg": "User logged out",
+		"success": true,
+		"message": "User logged out",
 	})
 }
