@@ -2,7 +2,7 @@ import axios, { AxiosError } from 'axios';
 import dotenv from 'dotenv'
 import redisClient from '../services/redisService';
 import throwError from './errorHelper';
-import { v5, v7 } from 'uuid';
+import { v5 } from 'uuid';
 import { AttributeValue } from '@aws-sdk/client-dynamodb';
 dotenv.config()
 
@@ -138,7 +138,7 @@ export const fetchRestaurantPOI: FetchRestaurantPOIType = async(restaurantId, fi
         urlParams.append("apiKey", String(process.env.HERE_SECRET))
         const restaurantQuery = await axios.get("https://lookup.search.hereapi.com/v1/lookup", { params: urlParams })
         const restaurantInfo = restaurantQuery.data
-
+        console.log(restaurantInfo)
         const parsedCategories = restaurantInfo.categories.map((item:{name: string}) => {
             return {S: item.name}
         })

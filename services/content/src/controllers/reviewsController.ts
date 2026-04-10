@@ -117,3 +117,14 @@ export const createReview: RequestHandler[] = [
         }
     }
 ]
+
+export const getRestaurantReviewsById: RequestHandler[] = [
+    
+    async(req, res, next) => {
+        try{
+
+        } catch (error) {
+            next(error)
+        }
+    }
+]

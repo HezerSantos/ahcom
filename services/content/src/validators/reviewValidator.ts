@@ -83,3 +83,19 @@ export const createReviewValidator = [
             return true
         })
 ]
+
+export const getRestaurantReviewsByIdValidator = [
+    param("id")
+        .isString()
+        .custom(id => {
+            const isUuid = validate(id)
+            const isHEREId = isHereId(id)
+
+            if (isUuid) {
+                return true
+            }
+            if (isHEREId) {
+                return true
+            }
+        })
+]
