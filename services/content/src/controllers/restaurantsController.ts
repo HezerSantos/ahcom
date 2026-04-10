@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 import { fetchPOIs, fetchRestaurantPOI } from "../helpers/restaurantPOIHelper";
-import { GetItemCommand, GetItemCommandInput, PutItemCommandInput, QueryCommand, QueryCommandInput, TransactionCanceledException, TransactWriteItem, TransactWriteItemsCommand, TransactWriteItemsInput } from "@aws-sdk/client-dynamodb";
+import { PutItemCommandInput, QueryCommand, QueryCommandInput, TransactionCanceledException, TransactWriteItem, TransactWriteItemsCommand, TransactWriteItemsInput } from "@aws-sdk/client-dynamodb";
 import { validate } from 'uuid'
 import throwError, { returnError } from "../helpers/errorHelper";
 import dotenv from 'dotenv'

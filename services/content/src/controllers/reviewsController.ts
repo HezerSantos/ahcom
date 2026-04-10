@@ -34,7 +34,7 @@ export const createReview: RequestHandler[] = [
             let typedRestaurantInfo: RestaurantInfoType
             //Creates the restaurant record if it does not exist to attatch review
             if (restaurantInfoBase === null) { //SHOULD NEVER RUN IF UUID DOES NOT EXIST OR IF HEREID GSI PK DOES EXIST
-                                               //MAKE SURE VALIDATION STEPS HANDLE THIS PROPERLY
+                console.log("HERE API RAN")    //MAKE SURE VALIDATION STEPS HANDLE THIS PROPERLY
                 //Use helper function to lookup with HERE ID with HERE API
                 const fetchPOIResult = await fetchRestaurantPOI(String(req.params.id), __filename) //Potentially creates duplicate
                 //It returns RestaurantInfoType | undefined                                        //Important to check if HEREID GSI PK Exists BEFORE RUNNING
@@ -108,7 +108,9 @@ export const createReview: RequestHandler[] = [
 
             res.status(201).json({
                 "success": true,
-                "message": `Created Review For Restaurant ${typedRestaurantInfo.info.M.id.S}`
+                "message": `Created Review For Restaurant ${typedRestaurantInfo.info.M.id.S}`,
+                "reviewMessage": req.body.reviewMessage,
+                "rating": req.body.rating
             })
         } catch(error) {
             next(error)
