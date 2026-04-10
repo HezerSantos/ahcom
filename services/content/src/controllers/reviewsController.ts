@@ -118,7 +118,7 @@ export const createReview: RequestHandler[] = [
     }
 ]
 
-export const getRestaurantReviewsById: RequestHandler[] = [
+export const getReviewsByRestaurantId: RequestHandler[] = [
     
     async(req, res, next) => {
         try{

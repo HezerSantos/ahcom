@@ -84,7 +84,7 @@ export const createReviewValidator = [
         })
 ]
 
-export const getRestaurantReviewsByIdValidator = [
+export const getReviewsByRestaurantIdValidator = [
     param("id")
         .isString()
         .custom(id => {
