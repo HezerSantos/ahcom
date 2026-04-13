@@ -1,12 +1,13 @@
 import { RequestHandler } from "express";
-import { createReviewValidator } from "../validators/reviewValidator";
+import { createReviewValidator, getReviewsByRestaurantIdValidator } from "../validators/reviewValidator";
 import { validationResult } from "express-validator";
 import throwError from "../helpers/errorHelper";
 import { validate } from "uuid";
-import { AttributeValue, PutItemCommand, PutItemCommandInput } from "@aws-sdk/client-dynamodb";
+import { AttributeValue, PutItemCommand, PutItemCommandInput, QueryCommand, QueryCommandInput } from "@aws-sdk/client-dynamodb";
 import { v7 } from 'uuid'
 import dynamodbClient from "../services/dynamodbService";
 import { fetchRestaurantPOI } from "../helpers/restaurantPOIHelper";
+import { UUID } from "node:crypto";
 
 interface RestaurantInfoType {
     info: {
@@ -119,10 +120,64 @@ export const createReview: RequestHandler[] = [
 ]
 
 export const getReviewsByRestaurantId: RequestHandler[] = [
-    
+    ...getReviewsByRestaurantIdValidator,
     async(req, res, next) => {
         try{
+            const errors = validationResult(req)
+            if (!errors.isEmpty()) {
+                throwError("PARAM INVALID", 400, __filename, {code:"INVALID_BODY", msg:"Bad Request", validationErrors: errors.array()})
+                return
+            }
 
+            const restaurantId = req.content?.restaurantId as UUID | null
+            let queryInput: QueryCommandInput | null
+            if (restaurantId) {
+                queryInput = {
+                    TableName: "AHCOM",
+                    KeyConditionExpression: "PK = :pk AND begins_with(SK, :skPrefix)",
+                    ExpressionAttributeValues: {
+                        ":pk": { S: `RESTAURANT#${restaurantId}` },
+                        ":skPrefix": { S: `REVIEW#` }
+                    },
+                    ScanIndexForward: false
+                }
+            } else {
+                queryInput = null
+            }
+
+            if (!queryInput) {
+                throwError("QUERY INPUT NULL", 500, __filename, {code:"INVALID_SERVER", msg:"Internal Server Error"})
+                return
+            }
+
+            const restaurantReviews = await dynamodbClient.send(new QueryCommand(queryInput))
+
+            if (!restaurantReviews.Items?.length) {
+                res.status(200).json({
+                    "success": true,
+                    "restaurantReviews": [],
+                    "message": "No Reviews Found",
+                    "id": restaurantId
+                })
+                return
+            } else {
+                const mappedReviews = restaurantReviews.Items.map(review => {
+                    return {
+                        "id": review.SK.S,
+                        "rating": review.rating.S,
+                        "review": review.review.S,
+                        "userId": review.userId.S
+                    }
+                })
+
+                res.status(200).json({
+                    "success": true,
+                    "restaurantReviews": mappedReviews,
+                    "message": "Restaurant Reviews Found",
+                    "id": restaurantId
+                })
+                return
+            }
         } catch (error) {
             next(error)
         }

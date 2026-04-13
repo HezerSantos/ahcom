@@ -1,4 +1,4 @@
-import { GetItemCommand, GetItemCommandInput, QueryCommand, QueryCommandInput } from "@aws-sdk/client-dynamodb";
+import { GetItemCommand, GetItemCommandInput, GetItemInput, QueryCommand, QueryCommandInput } from "@aws-sdk/client-dynamodb";
 import { body, param } from "express-validator";
 import { validate } from "uuid";
 import dynamodbClient from "../services/dynamodbService";
@@ -87,15 +87,51 @@ export const createReviewValidator = [
 export const getReviewsByRestaurantIdValidator = [
     param("id")
         .isString()
-        .custom(id => {
+        .custom( async(id, {req}) => {
+            if (!req.content) {
+                req.content = {}
+            }
             const isUuid = validate(id)
             const isHEREId = isHereId(id)
 
             if (isUuid) {
-                return true
+
+                const getItemCommandInput: GetItemCommandInput = {
+                    TableName: "AHCOM",
+                    Key: {
+                        "PK": { S: `RESTAURANT#${id}`},
+                        "SK": { S: `METADATA`}
+                    }
+                }
+                const res = await dynamodbClient.send(new GetItemCommand(getItemCommandInput))
+                if (res.Item !== undefined) {
+                    req.content.restaurantId = id
+                    return true
+                } else {
+                    req.content.restaurantId = null
+                }
             }
             if (isHEREId) {
-                return true
+                const queryItemCommandInput: QueryCommandInput = {
+                    TableName: "AHCOM",
+                    IndexName: "GSI1-index",
+                    KeyConditionExpression: "GSI1_PK = :hereId",
+                    ExpressionAttributeValues: {
+                        ":hereId": { S: `HERE#${id}`}
+                    }
+                }
+
+                const res = await dynamodbClient.send(new QueryCommand(queryItemCommandInput))
+
+                if (res.Items?.length) {
+                    req.content.restaurantId = res.Items[0].info.M?.id.S
+                    return true
+                } else {
+                    req.content.restaurantId = null
+                }
             }
+
+            req.content.restaurantId = null
+            throw new Error("Restaurant Does Not Exist")
         })
 ]
