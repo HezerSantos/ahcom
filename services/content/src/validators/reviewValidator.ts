@@ -1,4 +1,4 @@
-import { GetItemCommand, GetItemCommandInput, GetItemInput, QueryCommand, QueryCommandInput } from "@aws-sdk/client-dynamodb";
+import { GetItemCommand, GetItemCommandInput, QueryCommand, QueryCommandInput } from "@aws-sdk/client-dynamodb";
 import { body, param } from "express-validator";
 import { validate } from "uuid";
 import dynamodbClient from "../services/dynamodbService";
@@ -94,8 +94,8 @@ export const getReviewsByRestaurantIdValidator = [
             const isUuid = validate(id)
             const isHEREId = isHereId(id)
 
+            //Check for if UUID
             if (isUuid) {
-
                 const getItemCommandInput: GetItemCommandInput = {
                     TableName: "AHCOM",
                     Key: {
@@ -105,12 +105,13 @@ export const getReviewsByRestaurantIdValidator = [
                 }
                 const res = await dynamodbClient.send(new GetItemCommand(getItemCommandInput))
                 if (res.Item !== undefined) {
-                    req.content.restaurantId = id
+                    req.content.restaurantId = id //SETS ID FOR CONTROLLER
                     return true
                 } else {
                     req.content.restaurantId = null
                 }
             }
+            //Check to see if Here Id
             if (isHEREId) {
                 const queryItemCommandInput: QueryCommandInput = {
                     TableName: "AHCOM",
@@ -124,7 +125,7 @@ export const getReviewsByRestaurantIdValidator = [
                 const res = await dynamodbClient.send(new QueryCommand(queryItemCommandInput))
 
                 if (res.Items?.length) {
-                    req.content.restaurantId = res.Items[0].info.M?.id.S
+                    req.content.restaurantId = res.Items[0].info.M?.id.S //SETS ID FOR CONTROLLER
                     return true
                 } else {
                     req.content.restaurantId = null

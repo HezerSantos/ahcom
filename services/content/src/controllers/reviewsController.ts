@@ -123,14 +123,19 @@ export const getReviewsByRestaurantId: RequestHandler[] = [
     ...getReviewsByRestaurantIdValidator,
     async(req, res, next) => {
         try{
+            //Validation Errors Only Occur IF Restaurant ID is not valid (MISSING OR NON EXISTENT)
             const errors = validationResult(req)
             if (!errors.isEmpty()) {
                 throwError("PARAM INVALID", 400, __filename, {code:"INVALID_BODY", msg:"Bad Request", validationErrors: errors.array()})
                 return
             }
 
+            //VALIDATION SETS RESTAURANT ID AND ATTATCHES TO CONTENT
+            //Probably will never be null because validation error runs
             const restaurantId = req.content?.restaurantId as UUID | null
             let queryInput: QueryCommandInput | null
+            //Query by UUID because if there are reviews then
+            //UUID is Guaranteed to exist
             if (restaurantId) {
                 queryInput = {
                     TableName: "AHCOM",
@@ -145,13 +150,16 @@ export const getReviewsByRestaurantId: RequestHandler[] = [
                 queryInput = null
             }
 
+            //Safety check. Probably Will never run
             if (!queryInput) {
                 throwError("QUERY INPUT NULL", 500, __filename, {code:"INVALID_SERVER", msg:"Internal Server Error"})
                 return
             }
 
+            //AWS query
             const restaurantReviews = await dynamodbClient.send(new QueryCommand(queryInput))
 
+            //IF No Reviews
             if (!restaurantReviews.Items?.length) {
                 res.status(200).json({
                     "success": true,
@@ -161,6 +169,8 @@ export const getReviewsByRestaurantId: RequestHandler[] = [
                 })
                 return
             } else {
+                //IF Reviews
+                //Map it to remove gsi keys
                 const mappedReviews = restaurantReviews.Items.map(review => {
                     return {
                         "id": review.SK.S,
