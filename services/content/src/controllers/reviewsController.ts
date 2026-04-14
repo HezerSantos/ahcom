@@ -3,7 +3,7 @@ import { createReviewValidator, getReviewsByRestaurantIdValidator } from "../val
 import { validationResult } from "express-validator";
 import { errorHelpers } from "../helpers/errorHelper";
 import { validate } from "uuid";
-import { AttributeValue, PutItemCommand, PutItemCommandInput, QueryCommand, QueryCommandInput } from "@aws-sdk/client-dynamodb";
+import { AttributeValue, DeleteItemCommand, DeleteItemCommandInput, PutItemCommand, PutItemCommandInput, QueryCommand, QueryCommandInput } from "@aws-sdk/client-dynamodb";
 import { v7 } from 'uuid'
 import dynamodbClient from "../services/dynamodbService";
 import { fetchRestaurantPOI } from "../helpers/restaurantPOIHelper";
@@ -126,14 +126,18 @@ export const deleteReviewById: RequestHandler[] = [
 
     async(req, res, next) => {
         try{
+            //Additional check to ensure that userid is UUID
             const userId = String(req.user?.id)
             if (!validate(userId)) {
                 errorHelpers.authError("USERID NOT UUID", __filename)
                 return
             }
 
+            //Convert reviewID to string from potential undefined
             const reviewId = String(req.params.id)
 
+            //QUERY COMMAND INPUT
+            //Finds the review with GSI3-index where PK is REVIEW#<reviewId>
             const reviewQueryInput: QueryCommandInput = {
                 TableName: "AHCOM",
                 IndexName: "GSI3-index",
@@ -145,13 +149,52 @@ export const deleteReviewById: RequestHandler[] = [
 
             const reviewResponse = await dynamodbClient.send(new QueryCommand(reviewQueryInput))
 
+            //Check to see if the review exists
             if (!reviewResponse.Items?.length) {
                 errorHelpers.notFoundError("REVIEW NOT FOUND", __filename)
                 return
             }
             
+            //Parses the intitial response SK
+            const parsedReviewUserId = reviewResponse.Items[0]['GSI3_SK'].S?.split("#")
 
-            res.status(200).json({reviewResponse})
+            //Type assertion to check if it was formatted right
+            const typedParsedReviewUserId = parsedReviewUserId ?? []
+
+            //Check to avoid runtime error
+            if (typedParsedReviewUserId.length > 1) {
+                if (typedParsedReviewUserId[1] !== userId) {                                          //Index 1 is the reviewUserId
+                    errorHelpers.forbiddenError("USERID DOES NOT MATCH REVIEW USER ID", __filename)   //Error if they dont match
+                    return
+                }
+            } else {
+                errorHelpers.networkError("GSI3_SK IS NOT OF RIGHT FORMAT", __filename)               //Should only run if the GSI3_SK is not the right format
+            }
+            
+
+
+            const deleteReviewCommandInput: DeleteItemCommandInput = {
+                TableName: "AHCOM",
+                Key: {
+                    "PK": { S: reviewResponse.Items[0].PK.S ?? "NOTFOUND"},
+                    "SK": { S: reviewResponse.Items[0].SK.S ?? "NOTFOUND"}
+                },
+                ReturnValues: "ALL_OLD"
+            }
+
+            const deleteResponse = await dynamodbClient.send(new DeleteItemCommand(deleteReviewCommandInput))
+
+            if (deleteResponse.Attributes !== undefined) {
+                res.status(200).json({
+                    "success": true,
+                    "message": "Review successfully deleted",
+                    "attributes": deleteResponse.Attributes
+                })
+                return
+            } else {
+                errorHelpers.networkError("ERROR DELETING REVIEW", __filename)
+                return
+            }
         } catch(error) {
             next(error)
         }
