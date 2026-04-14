@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import { createReviewValidator, getReviewsByRestaurantIdValidator } from "../validators/reviewValidator";
 import { validationResult } from "express-validator";
-import throwError from "../helpers/errorHelper";
+import throwError, { errorHelpers } from "../helpers/errorHelper";
 import { validate } from "uuid";
 import { AttributeValue, PutItemCommand, PutItemCommandInput, QueryCommand, QueryCommandInput } from "@aws-sdk/client-dynamodb";
 import { v7 } from 'uuid'
@@ -24,7 +24,7 @@ export const createReview: RequestHandler[] = [
             //Checkst express-validator for errors
             const errors = validationResult(req)
             if (!errors.isEmpty()) {
-                throwError("REQUEST BODY INVALID", 400, __filename, {code:"INVALID_BODY", msg:"Bad Request", validationErrors: errors.array()})
+                errorHelpers.genericBadRequestError("REQUEST BODY INVALID", __filename, errors.array())
                 return
             }
 
@@ -98,6 +98,8 @@ export const createReview: RequestHandler[] = [
                     "GSI1_SK": { S: `REVIEW#${newReviewId}`},                       //SK TIMESTAMP UUID V7
                     "GSI2_PK": { S: `USER#${userId}`},                              //PK UUID
                     "GSI2_SK": { S: `REVIEW#${newReviewId}`},                       //SK TIMESTAMP UUID V7
+                    "GSI3_PK": { S: `REVIEW#${newReviewId}`},                       //PK to fetch specific review
+                    "GSI3_SK": { S: `USER#${userId}`},                              //SK for more ownership validation
                     "rating": { N: String(req.body.rating) },   
                     "review": { S: String(req.body.reviewMessage) },
                     "userId": { S: userId }
@@ -119,6 +121,43 @@ export const createReview: RequestHandler[] = [
     }
 ]
 
+
+export const deleteReviewById: RequestHandler[] = [
+
+    async(req, res, next) => {
+        try{
+            // const userId = String(req.user?.id)
+            // if (!validate(userId)) {
+            //     throwError("USERID NOT UUID", 401, __filename, {msg: "Unauthorized", code: "INVALID_AUTH"})
+            //     return
+            // }
+
+            const reviewId = String(req.params.id)
+
+            const reviewQueryInput: QueryCommandInput = {
+                TableName: "AHCOM",
+                IndexName: "GSI3-index",
+                KeyConditionExpression: "GSI3_PK = :reviewId",
+                ExpressionAttributeValues: {
+                    ":reviewId": { S: `REVIEW#${reviewId}` }
+                }
+            }
+
+            const reviewResponse = await dynamodbClient.send(new QueryCommand(reviewQueryInput))
+
+            if (!reviewResponse.Items?.length) {
+                errorHelpers.notFoundError("REVIEW NOT FOUND", __filename)
+                return
+            }
+            
+
+            res.status(200).json({reviewResponse})
+        } catch(error) {
+            next(error)
+        }
+    }
+
+]
 export const getReviewsByRestaurantId: RequestHandler[] = [
     ...getReviewsByRestaurantIdValidator,
     async(req, res, next) => {

@@ -138,6 +138,31 @@ POST /restaurants/here:pds:place:276u0vhj-b0bace6448ae4b0fbc1d5e323998a7d2/revie
 
 ---
 
+## Create Review (UUID)
+```http
+POST /restaurants/12765292-4fa5-570d-b769-822a344bed36/reviews
+```
+
+#### Request Body
+```json
+{
+    "reviewMessage": "I am a new review",
+    "rating": 3
+}
+```
+
+#### Response
+```json
+{
+    "message":"Created Review For Restaurant 12765292-4fa5-570d-b769-822a344bed36",
+    "rating":"3",
+    "reviewMessage":"I am a new review",
+    "success":true
+}
+```
+
+---
+
 ## Identity Service
 
 | METHOD | PATH | DESCRIPTION |
@@ -270,7 +295,7 @@ All restaurant data is stored under the same partition key.
 | Item Type | PK | SK | Required Attributes |
 | --- | --- | --- | --- |
 | Metadata | `RESTAURANT#<restaurantId>` | `METADATA` | `GSI1_PK`, `GSI1_SK`, `info` |
-| Review | `RESTAURANT#<restaurantId>` | `REVIEW#<reviewId>` | `GSI1_PK`, `GSI1_SK`, `GSI2_PK`, `GSI2_SK`, `rating`, `review`, `userid` |
+| Review | `RESTAURANT#<restaurantId>` | `REVIEW#<reviewId>` | `GSI1_PK`, `GSI1_SK`, `GSI2_PK`, `GSI2_SK`, `GSI3_PK`, `GSI3_SK`, `rating`, `review`, `userid` |
 
 --- 
 
@@ -313,6 +338,11 @@ Used to query ALL reviews by USER Id
 - GSI2_PK: `USER#<userId>`
 - GSI2_SK: `REVIEW#<reviewId>`
 
+#### Reviews Verification
+Useed to query a SPECIFIC review
+- Index Name: GSI3-index
+- GSI3_PK: `REVIEW#<reviewId>`
+- GSI3_SK: `USER#<userId>`
 
 #### Scope
 This GSI only includes RESTAURANT review items where:
