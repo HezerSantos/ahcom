@@ -140,7 +140,7 @@ func LoginUser(c *gin.Context) {
 	}
 
 	if userData == nil {
-		helpers.AuthError(c, "UNAUTHORIZED USER", "/auth/login")
+		helpers.AuthError(c, "UNAUTHORIZED USER. USER NOT FOUND", "/auth/login")
 		return
 	}
 

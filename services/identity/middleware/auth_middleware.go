@@ -11,7 +11,7 @@ import (
 
 func AuthMiddleware(c *gin.Context) {
 	var SECURE_AUTH_SECRET = []byte(os.Getenv("SECURE_AUTH_SECRET"))
-	authCookie, err := c.Cookie("__Secure-secure-auth.access")
+	authCookie, err := c.Cookie("__Secure-auth.access")
 
 	if err != nil {
 		helpers.AuthError(c, "SECURE AUTH COOKIE MISSING FROM HEADERS", "/AuthMiddleware")

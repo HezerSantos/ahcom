@@ -277,6 +277,30 @@ This application uses a single DynamoDB table to store all entities (users, rest
 
 ## Entity Types
 
+## Email (PK=`EMAIL#<userId>`)
+
+All email data is stored under ONE partition key
+
+---
+
+| Item Type | PK | SK | Required Attributes |
+| --- | --- | --- | --- |
+| Metadata | `EMAIL#<userId>` | `METADATA` | `userId` |
+
+---
+
+### Sort Key Types
+
+- METADATA
+    - SK: `METADATA`
+    - Description: `Email metadata`
+```json
+{
+  "SK": "METADATA",
+  "userId": "019d8dba-51eb-7d22-b90e-1c044040f9a9",
+  "PK": "EMAIL#tree@email.com"
+}
+```
 ## User (PK=`USER#<userId>`)
 
 All user data is stored under the same partition key
@@ -285,7 +309,7 @@ All user data is stored under the same partition key
 
 | Item Type | PK | SK | Required Attributes |
 | --- | --- | --- | --- |
-| Profile | `USER#<userId>` | `METADATA` | `email`, `password` |
+| Metadata | `USER#<userId>` | `METADATA` | `email`, `password` |
 | Restaurant | `USER#<userId>` | `RESTAURANT#<restaurantId>` | |
 
 ---
@@ -293,7 +317,7 @@ All user data is stored under the same partition key
 ### Sort Key Types
 
 - METADATA
-    - SK: `PROFILE`
+    - SK: `METADATA`
     - Description: `User metadata`
 ```json
 {

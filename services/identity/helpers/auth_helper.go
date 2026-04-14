@@ -57,7 +57,7 @@ func AuthenticateUser(reqBody *LoginUserBodyJSON) (*models.UserModel, error) {
 		TableName: aws.String("AHCOM"),
 		Key: map[string]types.AttributeValue{
 			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("EMAIL#%s", reqBody.Email)},
-			"SK": &types.AttributeValueMemberS{Value: "EMAIL"},
+			"SK": &types.AttributeValueMemberS{Value: "METADATA"},
 		},
 	}
 
@@ -91,7 +91,7 @@ func AuthenticateUser(reqBody *LoginUserBodyJSON) (*models.UserModel, error) {
 		TableName: aws.String("AHCOM"),
 		Key: map[string]types.AttributeValue{
 			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("USER#%s", parsedUUID)},
-			"SK": &types.AttributeValueMemberS{Value: "PROFILE"},
+			"SK": &types.AttributeValueMemberS{Value: "METADATA"},
 		},
 	}
 
@@ -114,7 +114,6 @@ func AuthenticateUser(reqBody *LoginUserBodyJSON) (*models.UserModel, error) {
 	}
 
 	match, err := ComparePasswordAndHash(reqBody.Password, typedPassword.Value)
-
 	if err != nil {
 		return nil, err
 	}

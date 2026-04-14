@@ -8,24 +8,41 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/gin-gonic/gin"
 )
+
+type User struct {
+	PK       string `dynamodbav:"PK" json:"pk"`
+	SK       string `dynamodbav:"SK" json:"sk"`
+	Email    string `dynamodbav:"email" json:"email"`
+	Settings struct {
+		PublicProfile bool   `dynamodbav:"publicProfile" json:"publicProfile"`
+		DistanceUnit  string `dynamodbav:"distanceUnit" json:"distanceUnit"`
+	} `dynamodbav:"settings" json:"settings"`
+	Profile struct {
+		AvatarUrl        *string `dynamodbav:"avatarUrl" json:"avatarUrl"`
+		ReviewCount      int     `dynamodbav:"reviewCount" json:"reviewCount"`
+		DisplayName      string  `dynamodbav:"displayName" json:"displayName"`
+		TotalSavedPlaces int     `dynamodbav:"totalSavedPlaces" json:"totalSavedPlaces"`
+	} `dynamodbav:"profile" json:"profile"`
+}
 
 func GetUserProfile(c *gin.Context) {
 
 	user, exist := c.Get("user")
 
 	if !exist {
-		helpers.AuthError(c, "PROPERTY USER DOES NOT EXIST IN CONTEXT", "/users")
+		helpers.AuthError(c, "PROPERTY USER DOES NOT EXIST IN CONTEXT", "/users/me")
 		return
 	}
 
 	typedUser, ok := user.(models.UserModel)
 
 	if !ok {
-		helpers.NetworkError(c, "USER STRUCT NOT OF TYPE USER MODEL", "/users")
+		helpers.NetworkError(c, "USER STRUCT NOT OF TYPE USER MODEL", "/users/me")
 		return
 	}
 
@@ -37,5 +54,29 @@ func GetUserProfile(c *gin.Context) {
 		},
 	}
 
-	res, err := services.DynamoDB.GetItem(context.TODO(), userGetItemCommandInput)
+	userData, err := services.DynamoDB.GetItem(context.TODO(), userGetItemCommandInput)
+
+	if err != nil {
+		helpers.NetworkError(c, "DYNAMO DB GET USER FAILED", "/users/me")
+		return
+	}
+
+	if userData.Item == nil {
+		helpers.NotFoundError(c, "USER NOT FOUND", "/users/me")
+		return
+	}
+
+	var userMapped User
+
+	err = attributevalue.UnmarshalMap(userData.Item, &userMapped)
+
+	if err != nil {
+		helpers.NetworkError(c, "ERROR UNMARSHALLING USER MAP", "/users/me")
+		return
+	}
+	c.JSON(200, gin.H{
+		"success": true,
+		"user":    userMapped,
+	})
+
 }

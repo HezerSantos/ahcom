@@ -7,7 +7,7 @@ import (
 )
 
 func printError(errorMessage string, path string, status int, c *gin.Context) {
-	fmt.Printf("ERROR: %d\n", status)
+	fmt.Printf("\nERROR: %d\n", status)
 	fmt.Printf("	Path: @%s\n", path)
 	fmt.Printf("	Message: %s\n", errorMessage)
 	fmt.Printf("	Origin: %s", c.Request.URL)
@@ -63,5 +63,14 @@ func ForbiddenError(c *gin.Context, errorMessage string, path string) {
 		"success": false,
 		"message": "Access denied. You do not have permission to perform this action.",
 		"code":    "FORBIDDEN",
+	})
+}
+
+func NotFoundError(c *gin.Context, errorMessage string, path string) {
+	printError(errorMessage, path, 404, c)
+	c.JSON(404, gin.H{
+		"success": false,
+		"message": "The requested resource could not be found.",
+		"code":    "NOT_FOUND",
 	})
 }

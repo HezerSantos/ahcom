@@ -1,8 +1,13 @@
 package routes
 
-import "github.com/gin-gonic/gin"
+import (
+	"alhcom/identity/handlers"
+	"alhcom/identity/middleware"
+
+	"github.com/gin-gonic/gin"
+)
 
 func UsersRouter(api *gin.RouterGroup) {
-	// usersRouter := api.Group("/users")
-	// usersRouter.GET()
+	usersRouter := api.Group("/users")
+	usersRouter.GET("/me", middleware.AuthMiddleware, handlers.GetUserProfile)
 }
