@@ -32,9 +32,9 @@ GET /restaurants?lat=35.22038824078856&lon=-89.77516194987392
 #### Response
 ```json
 {
-    success:true,
-    message:"Restaurants retrieved successfully",
-    poiResults:[ ... ]
+    "success":true,
+    "message":"Restaurants retrieved successfully",
+    "poiResults":[ ... ]
 }
 ```
 
@@ -48,21 +48,21 @@ GET /restaurants/12765292-4fa5-570d-b769-822a344bed36/reviews
 #### Response
 ```json
 {
-    id:"12765292-4fa5-570d-b769-822a344bed36",
-    message:"Restaurant Reviews Found",
-    restaurantReviews:[
+    "id":"12765292-4fa5-570d-b769-822a344bed36",
+    "message":"Restaurant Reviews Found",
+    "restaurantReviews":[
         {
-            id:"REVIEW#019d881f-3e63-76a8-9086-9e6f17fdcc6b",
-            review:"Test with UUID",
-            userId:"019d69af-d764-7765-a787-707d958766dd"
+            "id":"REVIEW#019d881f-3e63-76a8-9086-9e6f17fdcc6b",
+            "review":"Test with UUID",
+            "userId":"019d69af-d764-7765-a787-707d958766dd"
         },
         {
-            id:"REVIEW#019d881e-1f08-7708-a3b1-f183972b7db2",
-            review:"Test with Here Id",
-            userId:"019d69af-d764-7765-a787-707d958766dd"
+            "id":"REVIEW#019d881e-1f08-7708-a3b1-f183972b7db2",
+            "review":"Test with Here Id",
+            "userId":"019d69af-d764-7765-a787-707d958766dd"
         }
     ],
-    success:true
+    "success":true
 }
 ```
 
@@ -76,21 +76,21 @@ GET /restaurants/here:pds:place:276u0vhj-b0bace6448ae4b0fbc1d5e323998a7d2/review
 #### Response
 ```json
 {
-    id:"12765292-4fa5-570d-b769-822a344bed36",
-    message:"Restaurant Reviews Found",
-    restaurantReviews:[
+    "id":"12765292-4fa5-570d-b769-822a344bed36",
+    "message":"Restaurant Reviews Found",
+    "restaurantReviews":[
         {
-            id:"REVIEW#019d881f-3e63-76a8-9086-9e6f17fdcc6b",
-            review:"Test with UUID",
-            userId:"019d69af-d764-7765-a787-707d958766dd"
+            "id":"REVIEW#019d881f-3e63-76a8-9086-9e6f17fdcc6b",
+            "review":"Test with UUID",
+            "userId":"019d69af-d764-7765-a787-707d958766dd"
         },
         {
-            id:"REVIEW#019d881e-1f08-7708-a3b1-f183972b7db2",
-            review:"Test with Here Id",
-            userId:"019d69af-d764-7765-a787-707d958766dd"
+            "id":"REVIEW#019d881e-1f08-7708-a3b1-f183972b7db2",
+            "review":"Test with Here Id",
+            "userId":"019d69af-d764-7765-a787-707d958766dd"
         }
     ],
-    success:true
+    "success":true
 }
 ```
 
@@ -104,10 +104,10 @@ POST /restaurants/here:pds:place:276u0vhj-b0bace6448ae4b0fbc1d5e323998a7d2/save
 #### Response
 ```json
 {
-    id:"12765292-4fa5-570d-b769-822a344bed36",
-    message:"Hahn Airport has been added to your list",
-    progress:"DYNAMODB Ran",
-    success:true
+    "id":"12765292-4fa5-570d-b769-822a344bed36",
+    "message":"Hahn Airport has been added to your list",
+    "progress":"DYNAMODB Ran",
+    "success":true
 }
 ```
 
@@ -121,18 +121,18 @@ POST /restaurants/here:pds:place:276u0vhj-b0bace6448ae4b0fbc1d5e323998a7d2/revie
 #### Request Body
 ```json
 {
-    reviewMessage: "I am a new review",
-    rating: 3
+    "reviewMessage": "I am a new review",
+    "rating": 3
 }
 ```
 
 #### Response
 ```json
 {
-    message:"Created Review For Restaurant 12765292-4fa5-570d-b769-822a344bed36",
-    rating:"3",
-    reviewMessage:"I am a new review",
-    success:true
+    "message":"Created Review For Restaurant 12765292-4fa5-570d-b769-822a344bed36",
+    "rating":"3",
+    "reviewMessage":"I am a new review",
+    "success":true
 }
 ```
 
@@ -155,23 +155,23 @@ POST /auth/login
 #### Request Body
 ```json
 {
-    email: "email@email.com",
-    password: "password",
+    "email": "email@email.com",
+    "password": "password",
 }
 ```
 
 #### Response
 ```json
 {
-    message: "Login Successful",
-    success: true,
+    "message": "Login Successful",
+    "success": true,
 }
 ```
 
 #### Cookies
 ```json
 {
-    __Secure-auth.access: ...
+    "__Secure-auth.access": ...
 }
 ```
 
@@ -185,19 +185,19 @@ POST /auth/register
 #### Request Body
 ```json
 {
-    email: "email@email.com",
-    pasword: "password",
-    confirmPassword: "password"
+    "email": "email@email.com",
+    "pasword": "password",
+    "confirmPassword": "password"
 }
 ```
 
 #### Response
 ```json
 {
-    success: true,
-    message: "USER SUCCESSFULLY CREATED",
-    id: "019d69af-d764-7765-a787-707d958766dd",
-    email: "email@email.com",
+    "success": true,
+    "message": "USER SUCCESSFULLY CREATED",
+    "id": "019d69af-d764-7765-a787-707d958766dd",
+    "email": "email@email.com",
 }
 ```
 
@@ -212,8 +212,8 @@ POST /auth/logout
 #### Response
 ```json
 {
-    success: true,
-    message: "User logged out",
+    "success": true,
+    "message": "User logged out",
 }
 ```
 
@@ -242,6 +242,13 @@ All user data is stored under the same partition key
 
 ---
 
+| Item Type | PK | SK | Required Attributes |
+| --- | --- | --- | --- |
+| Profile | `USER#<userId>` | `PROFILE` | `email`, `password` |
+| Restaurant | `USER#<userId>` | `RESTAURANT#<restaurantId>` | |
+
+---
+
 ### Sort Key Types
 
 - PROFILE
@@ -260,6 +267,13 @@ All restaurant data is stored under the same partition key.
 
 ---
 
+| Item Type | PK | SK | Required Attributes |
+| --- | --- | --- | --- |
+| Metadata | `RESTAURANT#<restaurantId>` | `METADATA` | `GSI1_PK`, `GSI1_SK`, `info` |
+| Review | `RESTAURANT#<restaurantId>` | `REVIEW#<reviewId>` | `GSI1_PK`, `GSI1_SK`, `GSI2_PK`, `GSI2_SK`, `rating`, `review`, `userid` |
+
+--- 
+
 ### Sort Key Types
 
 - METADATA
@@ -274,13 +288,35 @@ All restaurant data is stored under the same partition key.
 
 ### GSIs
 
-#### GSI1-index
+#### HERE ID Query
+Used to query Restaurant by HERE ID
+- Index Name: GSI1-index (Overloaded)
 - GSI1_PK: `HERE#<hereId>`
 - GSI1_SK: `TIMESTAMP#<restaurantId (UUIDv7)>`
 
 #### Scope
-This index only includes RESTAURANT metadata items where:
+This GSI only includes RESTAURANT metadata items where:
 - PK = `RESTAURANT#<restaurantId>`
 - SK = `METADATA`
+
+---
+
+#### Hot Partition Shard Bucket
+Used to query ALL reviews and avoid Hot Partition
+-Index Name: GSI1-index (Overloaded)
+- GSI1_PK: `REVIEWSHARD#<shardNumber>`
+- GSI1_SK: `REVIEW#<reviewId>`
+
+#### User Reviews
+Used to query ALL reviews by USER Id
+- Index Name: GSI2-index
+- GSI2_PK: `USER#<userId>`
+- GSI2_SK: `REVIEW#<reviewId>`
+
+
+#### Scope
+This GSI only includes RESTAURANT review items where:
+- PK = `RESTAURANT#<restaurantId>`
+- SK = `REVIEW#<reviewId>`
 
 ---
