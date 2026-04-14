@@ -172,7 +172,7 @@ export const deleteReviewById: RequestHandler[] = [
             }
             
 
-
+            //Delete Item Command Input
             const deleteReviewCommandInput: DeleteItemCommandInput = {
                 TableName: "AHCOM",
                 Key: {
@@ -184,6 +184,8 @@ export const deleteReviewById: RequestHandler[] = [
 
             const deleteResponse = await dynamodbClient.send(new DeleteItemCommand(deleteReviewCommandInput))
 
+            //ReturnValues: ALL_OLD returns what was deleted
+            //If it is empty, that means nothing was deleted
             if (deleteResponse.Attributes !== undefined) {
                 res.status(200).json({
                     "success": true,
