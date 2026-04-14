@@ -21,7 +21,7 @@ The API is designed to support location-based queries, user-generated content, a
 | GET | /restaurants/:id/reviews | Get restaurant reviews by restaurant id (UUID or HERE ID) |
 | POST | /restaurants/:id/save | Save restaurant to favorites by restaurant id (HERE ID) |
 | POST | /restaurants/:id/reviews | Create review for restaurant by restaurant id (UUID or HERE ID) |
-
+| DELETE | /reviews/:id | Delete review using review id |
 ---
 
 ## Get Restaurants
@@ -157,6 +157,22 @@ POST /restaurants/12765292-4fa5-570d-b769-822a344bed36/reviews
     "message":"Created Review For Restaurant 12765292-4fa5-570d-b769-822a344bed36",
     "rating":"3",
     "reviewMessage":"I am a new review",
+    "success":true
+}
+```
+
+---
+
+## Delete Review (UUID)
+```http
+DELETE /reviews/12765292-4fa5-570d-b769-822a344bed36
+```
+
+### Response
+```json
+{
+    "attributes":{...},
+    "message":"Review successfully deleted",
     "success":true
 }
 ```
