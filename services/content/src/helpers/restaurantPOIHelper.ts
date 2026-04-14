@@ -162,7 +162,7 @@ export const fetchRestaurantPOI: FetchRestaurantPOIType = async(restaurantId, fi
     } catch (e) {
         const axiosError = e as AxiosError
         if (axiosError.status === 404){
-            throwError("ERROR FINDING UNKNOWN RESTAURANT", 404, filename, {code:"INVALID_BODY", msg:"Restaurant Not Found"})
+            throwError("ERROR FINDING UNKNOWN RESTAURANT", 404, filename, {code:"NOT_FOUND", msg:"Restaurant Not Found"})
         } else {
             throwError("AXIOS NETWORK ERROR", axiosError.status || 500, filename, {code:"INVALID_SERVER", msg:"Error fetching restaurant"})
         }

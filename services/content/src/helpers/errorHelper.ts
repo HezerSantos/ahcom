@@ -53,22 +53,25 @@ export const errorHelpers = {
       code: "INVALID_REQUEST",
       validationErrors: validationErrors
     }),
-  badRequestBodyError: (errorMessage: string, filename: string) => 
+  badRequestBodyError: (errorMessage: string, filename: string, validationErrors?: any[]) => 
     throwError(errorMessage, 400, filename, {
       message: "Invalid request body. Please check the data you provided.",
-      code: "INVALID_REQUEST_BODY"
+      code: "INVALID_REQUEST_BODY",
+      validationErrors: validationErrors ?? null
     }),
 
-  badRequestParamsError: (errorMessage: string, filename: string) => 
+  badRequestParamsError: (errorMessage: string, filename: string, validationErrors?: any[]) => 
     throwError(errorMessage, 400, filename, {
       message: "Invalid URL parameters. Please verify the request path.",
-      code: "INVALID_REQUEST_PARAMS"
+      code: "INVALID_REQUEST_PARAMS",
+      validationErrors: validationErrors ?? null
   }),
 
-  badRequestQueryError: (errorMessage: string, filename: string) => 
+  badRequestQueryError: (errorMessage: string, filename: string, validationErrors? : any[]) => 
     throwError(errorMessage, 400, filename, {
       message: "Invalid query parameters. Please check your query values.",
-      code: "INVALID_REQUEST_QUERY"
+      code: "INVALID_REQUEST_QUERY",
+      validationErrors: validationErrors ?? []
   }),
 
   forbiddenError: (errorMessage: string, filename: string) => 

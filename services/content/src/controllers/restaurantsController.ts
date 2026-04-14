@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 import { fetchPOIs, fetchRestaurantPOI } from "../helpers/restaurantPOIHelper";
 import { PutItemCommandInput, QueryCommand, QueryCommandInput, TransactionCanceledException, TransactWriteItem, TransactWriteItemsCommand, TransactWriteItemsInput } from "@aws-sdk/client-dynamodb";
 import { validate } from 'uuid'
-import throwError, { returnError } from "../helpers/errorHelper";
+import { errorHelpers, returnError } from "../helpers/errorHelper";
 import dotenv from 'dotenv'
 import dynamodbClient from "../services/dynamodbService";
 import { saveRestaurantValidator } from "../validators/restaurantValidator";
@@ -12,7 +12,7 @@ dotenv.config()
 export const getRestaurantPOIs: RequestHandler = async(req, res, next) => {
     try{
         if (req.query.lat === undefined || req.query.lon === undefined){
-            throwError("ERROR BINDING BODY LAT AND LON", 400, __filename, {code:"INVALID_BODY", msg:"Bad Request"})
+            errorHelpers.badRequestQueryError("ERROR BINDING QUERY LAT AND LON", __filename)
             return
         }
         const lat = parseFloat(String(req.query.lat))
@@ -24,7 +24,6 @@ export const getRestaurantPOIs: RequestHandler = async(req, res, next) => {
             next(poiResults[1])
             return
         }
-        console.log(poiResults[1].length)
         res.status(200).json({
             success: true,
             message: "Restaurants retrieved successfully",
@@ -45,13 +44,13 @@ export const saveRestaurantPOI: RequestHandler[] = [
             //Checkst express-validator for errors
             const errors = validationResult(req)
             if (!errors.isEmpty()) {
-                throwError("REQUEST BODY INVALID", 400, __filename, {code:"INVALID_BODY", msg:"Bad Request", validationErrors: errors.array()})
+                errorHelpers.badRequestParamsError("INVALID REQUEST PARAMS RESTAURANT ID", __filename)
                 return
             }
             //Checks to see if the uuid on USER OBJECT is valid
             //Probably is and redundant but checks
-            if (!validate (req.user?.id)) {
-                throwError("ERROR VALIDATING USER ID ON SAVE RESTAURANT", 401, __filename, {code: "INVALID_USER", msg:"Unauthorized"})
+            if (!validate(req.user?.id)) {
+                errorHelpers.authError("USER ID NOT UUID", __filename)
                 return
             }
 
@@ -93,7 +92,7 @@ export const saveRestaurantPOI: RequestHandler[] = [
 
             //Type Check to ENSURE that parsedRestaurantInfo is populated
             if (!parsedRestaurantInfo) {
-                throwError("ERROR PARSING RESTAURANT INFO", 500, __filename, {code:"INVALID_SERVER", msg:"Internal Server Error"})
+                errorHelpers.networkError("ERROR PARSING RESTAURANT INFO", __filename)
                 return
             }
 
@@ -146,7 +145,7 @@ export const saveRestaurantPOI: RequestHandler[] = [
             if (error instanceof TransactionCanceledException) {
                 if (error.CancellationReasons && error.CancellationReasons.length > 0){
                     if (error.CancellationReasons[0].Code === 'ConditionalCheckFailed'){
-                        const newError = returnError(`The conditional request failed`, 400, __filename, {code:"INVALID_BODY", msg:"Restaurant already saved"})
+                        const newError = returnError(`The conditional request failed`, 400, __filename, {code:"INVALID_REQUEST_PARAMS", msg:"Restaurant already saved"})
                         next(newError)
                         return
                     }

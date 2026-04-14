@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import { createReviewValidator, getReviewsByRestaurantIdValidator } from "../validators/reviewValidator";
 import { validationResult } from "express-validator";
-import throwError, { errorHelpers } from "../helpers/errorHelper";
+import { errorHelpers } from "../helpers/errorHelper";
 import { validate } from "uuid";
 import { AttributeValue, PutItemCommand, PutItemCommandInput, QueryCommand, QueryCommandInput } from "@aws-sdk/client-dynamodb";
 import { v7 } from 'uuid'
@@ -69,7 +69,7 @@ export const createReview: RequestHandler[] = [
                 } else {
                     //This will probably never run
                     //The catch block is guaranteed to throw an error
-                    throwError("RESTAURANT INFO RETURNED UNDEFINED", 500, __filename, {"message": "INTERNAL SERVER ERROR", code:"INVALID_SERVER"})
+                    errorHelpers.networkError("RESTAURANT INFOR RETURNED UNDEFINED", __filename)
                     return
                 }
             } else {
@@ -81,7 +81,7 @@ export const createReview: RequestHandler[] = [
             const userId = String(req.user?.id)
             const verifiedUserId = validate(userId)
             if (!verifiedUserId) {
-                throwError("USERID NOT UUID", 401, __filename, {code:"INVALID_USER", msg:"UNAUTHORIZED"})
+                errorHelpers.authError("USERID NOT UUID", __filename)
                 return
             }
             //STOP GETTING CONFUSED:
@@ -126,11 +126,11 @@ export const deleteReviewById: RequestHandler[] = [
 
     async(req, res, next) => {
         try{
-            // const userId = String(req.user?.id)
-            // if (!validate(userId)) {
-            //     throwError("USERID NOT UUID", 401, __filename, {msg: "Unauthorized", code: "INVALID_AUTH"})
-            //     return
-            // }
+            const userId = String(req.user?.id)
+            if (!validate(userId)) {
+                errorHelpers.authError("USERID NOT UUID", __filename)
+                return
+            }
 
             const reviewId = String(req.params.id)
 
@@ -158,6 +158,7 @@ export const deleteReviewById: RequestHandler[] = [
     }
 
 ]
+
 export const getReviewsByRestaurantId: RequestHandler[] = [
     ...getReviewsByRestaurantIdValidator,
     async(req, res, next) => {
@@ -165,7 +166,7 @@ export const getReviewsByRestaurantId: RequestHandler[] = [
             //Validation Errors Only Occur IF Restaurant ID is not valid (MISSING OR NON EXISTENT)
             const errors = validationResult(req)
             if (!errors.isEmpty()) {
-                throwError("PARAM INVALID", 400, __filename, {code:"INVALID_BODY", msg:"Bad Request", validationErrors: errors.array()})
+                errorHelpers.badRequestParamsError("RESTAURANT ID NOT VALID", __filename, errors.array())
                 return
             }
 
@@ -191,7 +192,7 @@ export const getReviewsByRestaurantId: RequestHandler[] = [
 
             //Safety check. Probably Will never run
             if (!queryInput) {
-                throwError("QUERY INPUT NULL", 500, __filename, {code:"INVALID_SERVER", msg:"Internal Server Error"})
+                errorHelpers.networkError("ERROR IN VALIDATION HANDLER. QUERY INPUT NULL", __filename)
                 return
             }
 
