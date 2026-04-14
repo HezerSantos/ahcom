@@ -285,20 +285,43 @@ All user data is stored under the same partition key
 
 | Item Type | PK | SK | Required Attributes |
 | --- | --- | --- | --- |
-| Profile | `USER#<userId>` | `PROFILE` | `email`, `password` |
+| Profile | `USER#<userId>` | `METADATA` | `email`, `password` |
 | Restaurant | `USER#<userId>` | `RESTAURANT#<restaurantId>` | |
 
 ---
 
 ### Sort Key Types
 
-- PROFILE
+- METADATA
     - SK: `PROFILE`
     - Description: `User metadata`
-
+```json
+{
+  "SK": "METADATA",
+  "settings": {
+    "publicProfile": true,
+    "distanceUnit": "miles"
+  },
+  "password": "$argon2id$v=19$m=65536,t=3,p=2$HQaviOX2dBj1HQHnguPIBA$Jqbf5NA7qEMmO1lueaUXdSZJj1WCZJQjAMnqDlVYE6k",
+  "PK": "USER#019d8d55-d4b3-7e2c-b0c8-b20cd04348f2",
+  "email": "tree@email.com",
+  "profile": {
+    "avatarUrl": null,
+    "reviewCount": 0,
+    "displayName": "tree@email.com",
+    "totalSavedPlaces": 0
+  }
+}
+```
 - RESTAURANT
     - SK: `RESTAURANT#<restaurantId>`
     - Description: `A restaurant saved by the user`
+```json
+{
+  "SK": "RESTAURANT#12765292-4fa5-570d-b769-822a344bed36",
+  "PK": "USER#019d69af-d764-7765-a787-707d958766dd"
+}
+```
 
 ---
 
@@ -320,10 +343,43 @@ All restaurant data is stored under the same partition key.
 - METADATA
   - SK: `METADATA`
   - Description: Restaurant metadata
-
+```json
+{
+  "SK": "METADATA",
+  "GSI1_SK": "TIMESTAMP#12765292-4fa5-570d-b769-822a344bed36",
+  "PK": "RESTAURANT#12765292-4fa5-570d-b769-822a344bed36",
+  "GSI1_PK": "HERE#here:pds:place:276u0vhj-b0bace6448ae4b0fbc1d5e323998a7d2",
+  "info": {
+    "address": "Hahn Airport, 55483 Lautzenhausen, Deutschland",
+    "lng": "7.27153",
+    "hereId": "here:pds:place:276u0vhj-b0bace6448ae4b0fbc1d5e323998a7d2",
+    "name": "Hahn Airport",
+    "id": "12765292-4fa5-570d-b769-822a344bed36",
+    "categories": [
+      "Flughafen"
+    ],
+    "lat": "49.94802"
+  }
+}
+```
 - REVIEW
   - SK: `REVIEW#<reviewId>`
   - Description: A review belonging to the restaurant
+```json
+{
+  "review": "I am a new review",
+  "SK": "REVIEW#019d8d20-9f13-76ca-b168-d52b2fab441f",
+  "GSI3_SK": "USER#019d69af-d764-7765-a787-707d958766dd",
+  "rating": 3,
+  "GSI1_SK": "REVIEW#019d8d20-9f13-76ca-b168-d52b2fab441f",
+  "PK": "RESTAURANT#12765292-4fa5-570d-b769-822a344bed36",
+  "GSI2_SK": "REVIEW#019d8d20-9f13-76ca-b168-d52b2fab441f",
+  "GSI2_PK": "USER#019d69af-d764-7765-a787-707d958766dd",
+  "GSI3_PK": "REVIEW#019d8d20-9f13-76ca-b168-d52b2fab441f",
+  "userId": "019d69af-d764-7765-a787-707d958766dd",
+  "GSI1_PK": "REVIEWSHARD#6"
+}
+```
 
 ---
 

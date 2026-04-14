@@ -68,6 +68,20 @@ func RegisterUser(c *gin.Context) {
 			"SK":       &types.AttributeValueMemberS{Value: "METADATA"},
 			"password": &types.AttributeValueMemberS{Value: passwordHash},
 			"email":    &types.AttributeValueMemberS{Value: ReqBody.Email},
+			"profile": &types.AttributeValueMemberM{
+				Value: map[string]types.AttributeValue{
+					"displayName":      &types.AttributeValueMemberS{Value: ReqBody.Email},
+					"avatarUrl":        &types.AttributeValueMemberNULL{Value: true},
+					"reviewCount":      &types.AttributeValueMemberN{Value: "0"},
+					"totalSavedPlaces": &types.AttributeValueMemberN{Value: "0"},
+				},
+			},
+			"settings": &types.AttributeValueMemberM{
+				Value: map[string]types.AttributeValue{
+					"distanceUnit":  &types.AttributeValueMemberS{Value: "miles"},
+					"publicProfile": &types.AttributeValueMemberBOOL{Value: true},
+				},
+			},
 		},
 		ConditionExpression: aws.String("attribute_not_exists(PK)"),
 	}
