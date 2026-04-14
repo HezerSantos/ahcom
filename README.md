@@ -186,6 +186,7 @@ DELETE /reviews/12765292-4fa5-570d-b769-822a344bed36
 | POST | /auth/register | Creates a new user |
 | POST | /auth/login | Issues JWT to user |
 | POST | /auth/logout | Deletes JWT from user |
+| GET | /users/me | Gets Current User info |
 
 
 ## Login User
@@ -245,7 +246,6 @@ POST /auth/register
 ---
 
 ## Logout User
-
 ```http
 POST /auth/logout
 ```
@@ -255,6 +255,35 @@ POST /auth/logout
 {
     "success": true,
     "message": "User logged out",
+}
+```
+
+---
+
+## Get User Profile & Settings & Info
+```http
+GET /users/me
+```
+
+#### Response
+```json
+{
+    "success":true,
+    "user":{
+        "email":"tree@email.com",
+        "pk":"USER#019d8dba-51eb-7d22-b90e-1c044040f9a9",
+        "profile":{
+            "avatarUrl":null,
+            "displayName":"tree@email.com",
+            "reviewCount":0,
+            "totalSavedPlaces":0
+        },
+        "settings":{
+            "distanceUnit":"miles",
+            "publicProfile":true
+        },
+        "sk":"METADATA"
+    }
 }
 ```
 
