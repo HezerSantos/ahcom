@@ -140,3 +140,50 @@ func GetProfileByUserID(c *gin.Context) {
 		})
 	}
 }
+
+type UserProfileJSON struct {
+	Profile struct {
+		DisplayName *string `json:"displayName"`
+	} `json:"profile"`
+}
+
+func UpdateUserProfile(c *gin.Context) {
+	var updateUserProfileJSON UserProfileJSON
+
+	err := c.ShouldBindJSON(&updateUserProfileJSON)
+
+	if err != nil {
+		helpers.BadRequestBodyError(c, "ERROR BINDING BODY", "/users/me")
+		return
+	}
+	user, ok := c.Get("user")
+
+	if !ok {
+		helpers.AuthError(c, "PROPERTY USER IS MISSING IN CONTEXT", "/users/me")
+		return
+	}
+
+	typedUser, ok := user.(models.UserModel)
+
+	if !ok {
+		helpers.NetworkError(c, "PROPERTY USER IS NOT OF TYPE UserModel", "/users/me")
+		return
+	}
+
+	updateExpression := ""
+	expressionAttributeValues := map[string]types.AttributeValue{}
+
+	if updateUserProfileJSON.Profile.DisplayName != nil {
+		updateExpression = fmt.Sprintf("", updateExpression)
+	}
+
+	updateProfileInput := &dynamodb.UpdateItemInput{
+		TableName: aws.String("AHCOM"),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("USER#%s", typedUser.ID)},
+			"SK": &types.AttributeValueMemberS{Value: "METADATA"},
+		},
+		UpdateExpression:          aws.String(""),
+		ExpressionAttributeValues: map[string]types.AttributeValue{},
+	}
+}
