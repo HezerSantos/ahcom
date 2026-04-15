@@ -112,6 +112,11 @@ func GetProfileByUserID(c *gin.Context) {
 		return
 	}
 
+	if userData.Item == nil {
+		helpers.NotFoundError(c, "USER NOT FOUND", "/users/me")
+		return
+	}
+
 	var userMapped User
 
 	err = attributevalue.UnmarshalMap(userData.Item, &userMapped)

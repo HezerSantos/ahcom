@@ -187,6 +187,7 @@ DELETE /reviews/12765292-4fa5-570d-b769-822a344bed36
 | POST | /auth/login | Issues JWT to user |
 | POST | /auth/logout | Deletes JWT from user |
 | GET | /users/me | Gets Current User info |
+| GET | /users/:id | Get User By ID |
 
 
 ## Login User
@@ -260,7 +261,7 @@ POST /auth/logout
 
 ---
 
-## Get User Profile & Settings & Info
+## Get Current User Profile & Settings & Info
 ```http
 GET /users/me
 ```
@@ -289,6 +290,41 @@ GET /users/me
 
 ---
 
+## Get User Profile & Settings & Info By ID
+```http
+GET /users/019d8dba-51eb-7d22-b90e-1c044040f9a9
+```
+
+#### Response (Public = `true`)
+```json
+{
+    "success":true,
+    "user":{
+        "email":"tree@email.com",
+        "pk":"USER#019d8dba-51eb-7d22-b90e-1c044040f9a9",
+        "profile":{
+            "avatarUrl":null,
+            "displayName":"tree@email.com",
+            "reviewCount":0,
+            "totalSavedPlaces":0
+        },
+        "settings":{
+            "distanceUnit":"miles",
+            "publicProfile":true
+        },
+        "sk":"METADATA"
+    }
+}
+```
+
+#### Response (Public = `false`)
+```json
+{
+    "success": true,
+    "public":  false,
+    "user":    null,
+}
+```
 # DYNAMODB
 
 ## Table: AHCOM
