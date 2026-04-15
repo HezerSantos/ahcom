@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type User struct {
@@ -79,4 +80,58 @@ func GetUserProfile(c *gin.Context) {
 		"user":    userMapped,
 	})
 
+}
+
+func GetProfileByUserID(c *gin.Context) {
+	userId, ok := c.Params.Get("id")
+
+	if !ok {
+		helpers.BadRequestParamsError(c, "USER ID IS MISSING", "/users/:id")
+		return
+	}
+
+	parsedUserId, err := uuid.Parse(userId)
+
+	if err != nil {
+		helpers.BadRequestParamsError(c, "USER ID IS NOT OF TYPE UUID", "/users/:id")
+		return
+	}
+
+	userGetItemInput := &dynamodb.GetItemInput{
+		TableName: aws.String("AHCOM"),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("USER#%s", parsedUserId)},
+			"SK": &types.AttributeValueMemberS{Value: "METADATA"},
+		},
+	}
+
+	userData, err := services.DynamoDB.GetItem(context.TODO(), userGetItemInput)
+
+	if err != nil {
+		helpers.NetworkError(c, "DYNAMO DB GET FAILED FOR USER", "/users/:id")
+		return
+	}
+
+	var userMapped User
+
+	err = attributevalue.UnmarshalMap(userData.Item, &userMapped)
+
+	if err != nil {
+		helpers.NetworkError(c, "FAILED TO UNMARSHAL USER MAP", "/users/:id")
+		return
+	}
+
+	if userMapped.Settings.PublicProfile == false {
+		c.JSON(200, gin.H{
+			"success": true,
+			"public":  false,
+			"user":    nil,
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"success": true,
+			"public":  true,
+			"user":    userMapped,
+		})
+	}
 }
