@@ -325,6 +325,46 @@ GET /users/019d8dba-51eb-7d22-b90e-1c044040f9a9
     "user":    null,
 }
 ```
+
+---
+
+## Update User Profile
+```http
+PATCH /users/me/profile
+```
+
+#### Request Body
+```json
+{
+    "displayName": "sads"
+}
+```
+
+#### Response (No Data)
+```json
+{
+    "success": true,
+    "message": "Nothing New To Update",
+}
+```
+
+#### Response (Yes Data)
+```json
+{
+    "success":true,
+    "updatedProfile":{
+        "profile":{
+            "avatarUrl":null,
+            "displayName":"sads",
+            "reviewCount":0,
+            "totalSavedPlaces":0
+        }
+    }
+}
+```
+
+---
+
 # DYNAMODB
 
 ## Table: AHCOM

@@ -6,6 +6,7 @@ import (
 	"alhcom/identity/services"
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -141,10 +142,23 @@ func GetProfileByUserID(c *gin.Context) {
 	}
 }
 
+// type UserProfileJSON struct {
+// 	Profile struct {
+// 		DisplayName *string `json:"displayName"`
+// 	} `json:"profile"`
+// }
+
 type UserProfileJSON struct {
+	DisplayName *string `json:"displayName"`
+}
+
+type UnmarshalProfile struct {
 	Profile struct {
-		DisplayName *string `json:"displayName"`
-	} `json:"profile"`
+		AvatarUrl        *string `dynamodbav:"avatarUrl" json:"avatarUrl"`
+		ReviewCount      int     `dynamodbav:"reviewCount" json:"reviewCount"`
+		DisplayName      string  `dynamodbav:"displayName" json:"displayName"`
+		TotalSavedPlaces int     `dynamodbav:"totalSavedPlaces" json:"totalSavedPlaces"`
+	} `dynamodbav:"profile" json:"profile"`
 }
 
 func UpdateUserProfile(c *gin.Context) {
@@ -152,10 +166,19 @@ func UpdateUserProfile(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&updateUserProfileJSON)
 
+	if err == io.EOF {
+		c.JSON(200, gin.H{
+			"success": true,
+			"message": "Nothing New To Update",
+		})
+		return
+	}
+
 	if err != nil {
 		helpers.BadRequestBodyError(c, "ERROR BINDING BODY", "/users/me")
 		return
 	}
+
 	user, ok := c.Get("user")
 
 	if !ok {
@@ -173,8 +196,22 @@ func UpdateUserProfile(c *gin.Context) {
 	updateExpression := ""
 	expressionAttributeValues := map[string]types.AttributeValue{}
 
-	if updateUserProfileJSON.Profile.DisplayName != nil {
-		updateExpression = fmt.Sprintf("", updateExpression)
+	if updateUserProfileJSON.DisplayName != nil {
+		if updateExpression == "" {
+			updateExpression = fmt.Sprint("SET profile.displayName = :newDisplayName")
+		} else {
+			updateExpression = fmt.Sprintf("%s, SET profile.displayName = :newDisplayName", updateExpression)
+		}
+
+		expressionAttributeValues[":newDisplayName"] = &types.AttributeValueMemberS{Value: *updateUserProfileJSON.DisplayName}
+	}
+
+	if updateExpression == "" {
+		c.JSON(200, gin.H{
+			"success": true,
+			"message": "Nothing New To Update",
+		})
+		return
 	}
 
 	updateProfileInput := &dynamodb.UpdateItemInput{
@@ -183,7 +220,28 @@ func UpdateUserProfile(c *gin.Context) {
 			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("USER#%s", typedUser.ID)},
 			"SK": &types.AttributeValueMemberS{Value: "METADATA"},
 		},
-		UpdateExpression:          aws.String(""),
-		ExpressionAttributeValues: map[string]types.AttributeValue{},
+		UpdateExpression:          aws.String(updateExpression),
+		ExpressionAttributeValues: expressionAttributeValues,
+		ReturnValues:              "UPDATED_NEW",
 	}
+
+	updateRes, err := services.DynamoDB.UpdateItem(context.TODO(), updateProfileInput)
+
+	if err != nil {
+		helpers.NetworkError(c, "ERROR UPDATING USER PROFILE", "/users/me/profile")
+		return
+	}
+
+	var unmarshalledProfile UnmarshalProfile
+	err = attributevalue.UnmarshalMap(updateRes.Attributes, &unmarshalledProfile)
+
+	if err != nil {
+		helpers.NetworkError(c, "ERROR UNMARSHALLING UPDATE RESPONSE", "/users/me/profile")
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"success":        true,
+		"updatedProfile": unmarshalledProfile,
+	})
 }
