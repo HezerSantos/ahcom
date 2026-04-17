@@ -34,7 +34,11 @@ GET /restaurants?lat=35.22038824078856&lon=-89.77516194987392
 {
     "success":true,
     "message":"Restaurants retrieved successfully",
-    "poiResults":[ ... ]
+    "poiResults":{
+        "best": [...],
+        "explore": [...],
+        "quick": [...]
+    }
 }
 ```
 

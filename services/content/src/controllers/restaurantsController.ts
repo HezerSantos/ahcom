@@ -9,6 +9,60 @@ import { saveRestaurantValidator } from "../validators/restaurantValidator";
 import { validationResult } from "express-validator";
 dotenv.config()
 
+
+const SCORE_MAP = new Map<string, number>([
+  // Dining (core food)
+
+  ["100-1000-0002", 120], // Fine Dining
+  ["100-1000-0001", 100], // Casual Dining
+  ["100-1000-0008", 95],  // Bistro
+  ["100-1000-0005", 95],  // Taqueria
+  ["100-1000-0006", 85],  // Deli
+  ["100-1000-0000", 80],  // Restaurant (generic)
+
+  // Fast / convenience food
+  ["100-1000-0009", 90],  // Fast Food
+  ["100-1000-0003", 90],  // Take Out and Delivery Only
+  ["100-1000-0007", 75],  // Cafeteria
+  ["100-1000-0004", 85],  // Food Market-Stall
+
+  // Drinks / light food
+  ["100-1100-0010", 60],  // Coffee Shop
+  ["100-1100-0331", 55],  // Tea House
+  ["100-1100-0000", 60],  // Coffee-Tea (generic)
+]);
+
+const calculatePOIScore = (item: any, meter: number, explore = false) => {
+    const distance = item.distance as number
+    const categories = item.categories as any[]
+    const primaryCategory = categories.filter(item => item.primary)[0]
+
+    let categoryScore = (SCORE_MAP.get(primaryCategory.id) ?? 50) - ((distance / 1000) * meter)
+
+    if (explore) {
+        if (primaryCategory.id === "100-1000-0002" || primaryCategory.id === "100-1000-0005") {
+            categoryScore += 10
+        } else {
+            categoryScore -= 10
+        }
+        return [categoryScore, item]
+    } else {
+        return [categoryScore, item]
+    }
+    
+}
+const processPOIResults = (results: any[]): Record<string, any[]> => {
+    const best = results.map(item => calculatePOIScore(item, 18)) as any []
+    const quick = results.map(item => calculatePOIScore(item, 35)) as any[]
+    const explore = results.map(item => calculatePOIScore(item, 5, true)) as any[]
+
+    return {
+        "best": best.sort((a, b) => b[0] - a[0]).slice(0,6),
+        "quick": quick.sort((a, b) => b[0] - a[0]).slice(0,4),
+        "explore": explore.sort((a, b) => b[0] - a[0]).slice(0,8)
+    }
+}
+
 export const getRestaurantPOIs: RequestHandler = async(req, res, next) => {
     try{
         if (req.query.lat === undefined || req.query.lon === undefined){
@@ -24,10 +78,12 @@ export const getRestaurantPOIs: RequestHandler = async(req, res, next) => {
             next(poiResults[1])
             return
         }
+
+        const processedPOIResults = processPOIResults(poiResults[1])
         res.status(200).json({
             success: true,
             message: "Restaurants retrieved successfully",
-            poiResults: poiResults[1]
+            poiResults: processedPOIResults
         } as ResponseJSON)
     } catch (error) {
         next(error)

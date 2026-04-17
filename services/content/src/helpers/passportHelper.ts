@@ -29,7 +29,7 @@ passport.use(new JwtStrategy(opts, async function(jwt_payload, done) {
             TableName: "AHCOM",
             Key: {
                 PK: {S: `USER#${jwt_payload.sub}`},
-                SK: {S: `PROFILE`}
+                SK: {S: `METADATA`}
             }
         }
         const userGetItemCommand = new GetItemCommand(params)
@@ -37,7 +37,7 @@ passport.use(new JwtStrategy(opts, async function(jwt_payload, done) {
         const userQueryResult = await dynamodbClient.send(userGetItemCommand)
 
         if (userQueryResult.Item === undefined) {
-            const customError = returnError("User Error", 401, __filename, {msg:"Invalid User", code:"INVALID_USER"})
+            const customError = returnError("User Not Found Error", 401, __filename, {msg:"Invalid User", code:"INVALID_USER"})
             return done(customError, false)
         }
         return done(null, {id: String(userQueryResult.Item.PK.S).split("#")[1], email: userQueryResult.Item?.email.S})
