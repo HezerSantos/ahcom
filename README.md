@@ -369,6 +369,42 @@ PATCH /users/me/profile
 
 ---
 
+## Update User Settings
+```http
+PATCH /users/me/settings
+```
+
+#### Request Body
+```json
+{
+    "publicProfile": true,
+    "distanceUnit": "miles"
+}
+```
+
+#### Response (No Data)
+```json
+{
+    "success": true,
+    "message": "Nothing New To Update",
+}
+```
+
+#### Response (Yes Data)
+```json
+{
+    "success":true,
+    "updatedProfile":{
+        "settings":{
+            "distanceUnit":"miles",
+            "publicProfile":true
+        }
+    }
+}
+```
+
+---
+
 # DYNAMODB
 
 ## Table: AHCOM

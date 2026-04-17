@@ -11,5 +11,6 @@ func UsersRouter(api *gin.RouterGroup) {
 	usersRouter := api.Group("/users")
 	usersRouter.GET("/me", middleware.AuthMiddleware, handlers.GetUserProfile)
 	usersRouter.GET("/:id", middleware.AuthMiddleware, handlers.GetProfileByUserID)
-	usersRouter.PATCH("/me", middleware.AuthMiddleware, handlers.UpdateUserProfile)
+	usersRouter.PATCH("/me/profile", middleware.AuthMiddleware, handlers.UpdateUserProfile)
+	usersRouter.PATCH("/me/settings", middleware.AuthMiddleware, handlers.UpdateUserSettings)
 }

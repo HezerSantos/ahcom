@@ -245,3 +245,103 @@ func UpdateUserProfile(c *gin.Context) {
 		"updatedProfile": unmarshalledProfile,
 	})
 }
+
+type UpdateUserSettingsJSON struct {
+	PublicProfile *bool   `json:"publicProfile"`
+	DistanceUnit  *string `json:"distanceUnit"`
+}
+
+type UnmarshalSettings struct {
+	Settings struct {
+		PublicProfile bool   `dynamodbav:"publicProfile" json:"publicProfile"`
+		DistanceUnit  string `dynamodbav:"distanceUnit" json:"distanceUnit"`
+	} `dynamodbav:"settings" json:"settings"`
+}
+
+func UpdateUserSettings(c *gin.Context) {
+	var updateUserSettingsJSON UpdateUserSettingsJSON
+
+	err := c.ShouldBindJSON(&updateUserSettingsJSON)
+
+	if err == io.EOF {
+		c.JSON(200, gin.H{
+			"success": true,
+			"message": "Nothing New To Update",
+		})
+		return
+	} else if err != nil {
+		helpers.BadRequestBodyError(c, "ERROR BINDING BODY", "/users/me")
+		return
+	}
+
+	user, ok := c.Get("user")
+
+	if !ok {
+		helpers.AuthError(c, "PROPERTY USER IS MISSING IN CONTEXT", "/users/me")
+		return
+	}
+
+	typedUser, ok := user.(models.UserModel)
+
+	if !ok {
+		helpers.NetworkError(c, "PROPERTY USER IS NOT OF TYPE UserModel", "/users/me")
+		return
+	}
+
+	updateExpression := ""
+	expressionAttributeValues := map[string]types.AttributeValue{}
+	if updateUserSettingsJSON.DistanceUnit != nil {
+		if updateExpression == "" {
+			updateExpression = "SET settings.distanceUnit = :newDistanceUnit"
+		} else {
+			updateExpression = fmt.Sprintf("%s, SET settings.distanceUnit = :newDistanceUnit", updateExpression)
+		}
+		expressionAttributeValues[":newDistanceUnit"] = &types.AttributeValueMemberS{Value: *updateUserSettingsJSON.DistanceUnit}
+	}
+	if updateUserSettingsJSON.PublicProfile != nil {
+		if updateExpression == "" {
+			updateExpression = "SET settings.publicProfile = :publicProfile"
+		} else {
+			updateExpression = fmt.Sprintf("%s, SET settings.publicProfile = :publicProfile", updateExpression)
+		}
+		expressionAttributeValues[":publicProfile"] = &types.AttributeValueMemberBOOL{Value: *updateUserSettingsJSON.PublicProfile}
+	}
+
+	if updateExpression == "" {
+		c.JSON(200, gin.H{
+			"success": true,
+			"message": "Nothing New To Update",
+		})
+		return
+	}
+	updateSettingsInput := &dynamodb.UpdateItemInput{
+		TableName: aws.String("AHCOM"),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("USER#%s", typedUser.ID)},
+			"SK": &types.AttributeValueMemberS{Value: "METADATA"},
+		},
+		UpdateExpression:          aws.String(updateExpression),
+		ExpressionAttributeValues: expressionAttributeValues,
+		ReturnValues:              "UPDATED_NEW",
+	}
+
+	updateRes, err := services.DynamoDB.UpdateItem(context.TODO(), updateSettingsInput)
+
+	if err != nil {
+		helpers.NetworkError(c, "ERROR UPDATING USER SETTINGS", "/users/me/profile")
+		return
+	}
+
+	var unmarshalledSettings UnmarshalSettings
+	err = attributevalue.UnmarshalMap(updateRes.Attributes, &unmarshalledSettings)
+
+	if err != nil {
+		helpers.NetworkError(c, "ERROR UNMARSHALLING UPDATE RESPONSE", "/users/me/profile")
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"success":        true,
+		"updatedProfile": unmarshalledSettings,
+	})
+}
