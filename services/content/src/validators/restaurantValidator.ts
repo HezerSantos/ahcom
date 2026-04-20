@@ -1,4 +1,5 @@
 import { param } from "express-validator";
+import { validate } from "uuid";
 
 const isHereId = (id: string): boolean => {
   // Matches 'here:pds:place:' followed by exactly 32 alphanumeric/dash characters
@@ -15,5 +16,18 @@ export const saveRestaurantValidator = [
                 return true
             }
             throw Error("INVALID HERE ID")
+        })
+]
+
+export const deleteSavedRestaurantValidator = [
+    param("id")
+        .notEmpty()
+        .isString()
+        .custom(id => {
+            if (validate(id)){
+                return true
+            } else {
+                throw new Error("RESTAURANT IS NOT VALID")
+            }
         })
 ]

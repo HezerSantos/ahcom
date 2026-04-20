@@ -1,11 +1,11 @@
 import { RequestHandler } from "express";
 import { fetchPOIs, fetchRestaurantPOI } from "../helpers/restaurantPOIHelper";
-import { PutItemCommandInput, QueryCommand, QueryCommandInput, TransactionCanceledException, TransactWriteItem, TransactWriteItemsCommand, TransactWriteItemsInput } from "@aws-sdk/client-dynamodb";
+import { DeleteItemCommand, DeleteItemCommandInput, PutItemCommandInput, QueryCommand, QueryCommandInput, TransactionCanceledException, TransactWriteItem, TransactWriteItemsCommand, TransactWriteItemsInput } from "@aws-sdk/client-dynamodb";
 import { validate } from 'uuid'
-import { errorHelpers, returnError } from "../helpers/errorHelper";
+import throwError, { errorHelpers, returnError } from "../helpers/errorHelper";
 import dotenv from 'dotenv'
 import dynamodbClient from "../services/dynamodbService";
-import { saveRestaurantValidator } from "../validators/restaurantValidator";
+import { deleteSavedRestaurantValidator, saveRestaurantValidator } from "../validators/restaurantValidator";
 import { validationResult } from "express-validator";
 dotenv.config()
 
@@ -207,6 +207,54 @@ export const saveRestaurantPOI: RequestHandler[] = [
                     }
                 }
             }
+            next(error)
+        }
+    }
+]
+
+export const deleteSavedRestaurant: RequestHandler[] = [
+    ...deleteSavedRestaurantValidator,
+    async(req, res, next) => {
+        try{
+            const errors = validationResult(req)
+
+            if (!errors.isEmpty()) {
+                errorHelpers.badRequestParamsError("RESTAURANT ID INVALID", __filename, errors.array())
+                return
+            }
+            if (!validate(req.user?.id)) {
+                console.log(req.user?.id)
+                errorHelpers.authError("USER ID NOT UUID", __filename)
+                return
+            }
+
+            const deleteSavedRestaurantInput: DeleteItemCommandInput = {
+                TableName: "AHCOM",
+                Key: {
+                    "PK": { S: `USER#${req.user?.id}`},
+                    "SK": { S: `RESTAURANT#${req.params.id}`}
+                },
+                ReturnValues: "ALL_OLD"
+            }
+
+            const deletedSavedRestaurant = await dynamodbClient.send(new DeleteItemCommand(deleteSavedRestaurantInput))
+            if (!deletedSavedRestaurant.Attributes) {
+                res.status(404).json({
+                    "success": true,
+                    "errors": {
+                        "message": "Item deleted did not exist.",
+                        "code": "NOT_FOUND"
+                    }
+                })
+                return
+            } else {
+                res.status(200).json({
+                    "success": true,
+                    "message": "Item successfully deleted.",
+                    "attributes": deletedSavedRestaurant.Attributes
+                })
+            }
+        } catch(error) {
             next(error)
         }
     }

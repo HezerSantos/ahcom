@@ -198,7 +198,7 @@ func UpdateUserProfile(c *gin.Context) {
 
 	if updateUserProfileJSON.DisplayName != nil {
 		if updateExpression == "" {
-			updateExpression = fmt.Sprint("SET profile.displayName = :newDisplayName")
+			updateExpression = "SET profile.displayName = :newDisplayName"
 		} else {
 			updateExpression = fmt.Sprintf("%s, SET profile.displayName = :newDisplayName", updateExpression)
 		}

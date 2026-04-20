@@ -19,9 +19,10 @@ The API is designed to support location-based queries, user-generated content, a
 | --- | --- | --- |
 | GET | /restaurants?lat&lon | Get restaurants using position from HERE API |
 | GET | /restaurants/:id/reviews | Get restaurant reviews by restaurant id (UUID or HERE ID) |
-| POST | /restaurants/:id/save | Save restaurant to favorites by restaurant id (HERE ID) |
+| POST | /restaurants/:id/saved | Save restaurant to favorites by restaurant id (HERE ID) |
 | POST | /restaurants/:id/reviews | Create review for restaurant by restaurant id (UUID or HERE ID) |
 | DELETE | /reviews/:id | Delete review using review id |
+| DELETE | /reviews/:id/saved | Delete User Saved Restaurant using Restaurant ID |
 ---
 
 ## Get Restaurants
@@ -102,7 +103,7 @@ GET /restaurants/here:pds:place:276u0vhj-b0bace6448ae4b0fbc1d5e323998a7d2/review
 
 ## Save Restaurant (HERE ID)
 ```http
-POST /restaurants/here:pds:place:276u0vhj-b0bace6448ae4b0fbc1d5e323998a7d2/save
+POST /restaurants/here:pds:place:276u0vhj-b0bace6448ae4b0fbc1d5e323998a7d2/saved
 ```
 
 #### Response
@@ -172,11 +173,45 @@ POST /restaurants/12765292-4fa5-570d-b769-822a344bed36/reviews
 DELETE /reviews/12765292-4fa5-570d-b769-822a344bed36
 ```
 
-### Response
+#### Response
 ```json
 {
     "attributes":{...},
     "message":"Review successfully deleted",
+    "success":true
+}
+```
+
+---
+
+## Delete Saved Restaurant (UUID)
+```http
+DELETE /restaurants/12765292-4fa5-570d-b769-822a344bed35/saved
+```
+
+#### Response (NOT FOUND)
+```json
+{
+    "errors":{
+        "code":"NOT_FOUND",
+        "message":"Item deleted did not exist."
+    },
+    "success":true
+}
+```
+
+#### Response (FOUND)
+```json
+{
+    "attributes":{
+        "PK":{
+            "S":"USER#019d9236-c7ee-7700-8e06-718bf6617df2"
+        },
+        "SK":{
+            "S":"RESTAURANT#12765292-4fa5-570d-b769-822a344bed36"
+        }
+    },
+    "message":"Item successfully deleted.",
     "success":true
 }
 ```
