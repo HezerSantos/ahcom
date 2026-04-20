@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 import { fetchPOIs, fetchRestaurantPOI } from "../helpers/restaurantPOIHelper";
 import { DeleteItemCommand, DeleteItemCommandInput, PutItemCommandInput, QueryCommand, QueryCommandInput, TransactionCanceledException, TransactWriteItem, TransactWriteItemsCommand, TransactWriteItemsInput } from "@aws-sdk/client-dynamodb";
 import { validate } from 'uuid'
-import throwError, { errorHelpers, returnError } from "../helpers/errorHelper";
+import { errorHelpers, returnError } from "../helpers/errorHelper";
 import dotenv from 'dotenv'
 import dynamodbClient from "../services/dynamodbService";
 import { deleteSavedRestaurantValidator, saveRestaurantValidator } from "../validators/restaurantValidator";
