@@ -1,9 +1,7 @@
 package main
 
 import (
-	"alhcom/identity/helpers"
-	"alhcom/identity/routes"
-	"alhcom/identity/services"
+	"gateway/routes"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -36,18 +34,15 @@ var trustedProxies = []string{
 
 func main() {
 	err := godotenv.Load()
-
 	if err != nil {
 		panic("ENV FILE IS NOT LOADED")
 	}
-	services.RegisterDynamoDBClient()
 
 	r := gin.New()
 	r.SetTrustedProxies(trustedProxies)
-	r.NoRoute(func(c *gin.Context) {
-		helpers.NotFoundError(c, "PATH ON IDENTITY NOT FOUND", "/identity")
-	})
-	api := r.Group("/identity")
+
+	api := r.Group("/api")
+
 	routes.ProcessRoutes(api)
-	r.Run(":3000")
+	r.Run(":8080")
 }

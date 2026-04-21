@@ -11,9 +11,8 @@ const errorMiddleware: ErrorRequestHandler = (err, req, res, next) => {
 
     res.status(err.status || 500).json({
       success: false,
-      message: "An Error Has Occured",
-      errors: err.json || {msg: 'Internal Server Error'},
-    } as ResponseJSON);
+      ...err.json  ?? {...{message: 'Internal Server Error', code:"INVALID_SERVER_ERROR"}}
+    });
 }
 
 export default errorMiddleware

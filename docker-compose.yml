@@ -41,4 +41,15 @@ services:
     image: redis:alpine
     ports:
       - "6379:6379"
+  gateway:
+    build: ./services/gateway
+    container_name: gateway
+    user: root
+    volumes:
+      - ./services/gateway:/app
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./services/gateway/.env
+    
     

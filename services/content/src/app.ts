@@ -11,8 +11,16 @@ app.use(express.json())
 
 app.use("/content", contentRouter)
 
-app.use((_, res) => {
-  res.status(404).json({ error: 'Not Found' });
+app.use((req, res) => {
+  console.error(`Error ${404 }:`)
+  console.error(`   Path: @${req.url}`)
+  console.error(`   Filename: @${__filename}`)
+  console.error(`   Message: ${"PATH ON CONTENT NOT FOUND"}`)
+  res.status(404).json({
+    "code":"NOT_FOUND",
+    "message":"The requested resource could not be found.",
+    "success":false
+  });
 });
 
 app.use(errorMiddleware)
