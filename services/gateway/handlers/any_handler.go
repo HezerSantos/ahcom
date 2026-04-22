@@ -92,7 +92,14 @@ func AnyHandler(c *gin.Context) {
 	microServiceResponseHeaders := microServiceResponse.Header
 	cResponseHeaders := c.Writer.Header()
 	for k, v := range microServiceResponseHeaders {
-		cResponseHeaders[k] = v
+		if k == "Ahcom-Error" {
+			errorMessage := microServiceResponseHeaders.Get("Ahcom-Error")
+			if errorMessage != "" {
+				c.Set("errorMessage", errorMessage)
+			}
+		} else {
+			cResponseHeaders[k] = v
+		}
 	}
 
 	cResponseBodyBytes, err := io.ReadAll(microServiceResponse.Body)
