@@ -11,7 +11,67 @@ The system is split into two main services:
 
 The API is designed to support location-based queries, user-generated content, and secure authentication in a structured and scalable way.
 
+# Environment Variables
+
+## Gateway Service
+- ERROR_LOGGER
+    - Values:
+        - `true`
+        - `false`
+
+## Content Service
+- AWS_ACCESS_KEY_ID
+    - Values:
+        - `AWS ACCESS KEY ID`
+- AWS_REGION
+    - Values: 
+        - `AWS REGION`
+- AWS_SECRET_ACCESS_KEY
+    - Values: 
+        - `AWS SECRET ACCESS KEY`
+- HERE_SECRET
+    - Values:
+        - `HERE API SECRET`
+- SECURE_AUTH_SECRET
+    - Values:
+        - `JWT SECRET`
+- REDIS_URL
+    - Values:
+        - `REDIS URL`
+- ERROR_LOGGER
+    - Values:
+        - `true`
+        - `false`
+
+
+## Content Service
+- AWS_ACCESS_KEY_ID
+    - Values:
+        - `AWS ACCESS KEY ID`
+- AWS_REGION
+    - Values: 
+        - `AWS REGION`
+- AWS_SECRET_ACCESS_KEY
+    - Values: 
+        - `AWS SECRET ACCESS KEY`
+- SECURE_AUTH_SECRET
+    - Values:
+        - `JWT SECRET`
+- REDIS_URL
+    - Values:
+        - `REDIS URL`
+- ERROR_LOGGER
+    - Values:
+        - `true`
+        - `false`
+
 # API GUIDE
+### Gateway
+| METHOD | PATH | DESCRIPTION |
+| Any | /api/content/*routePath | Handles Content Service |
+| Any | /api/identity/*routePath | Handles Identity Service |
+
+---
 
 ### Content Service
 
