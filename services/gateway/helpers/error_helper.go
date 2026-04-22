@@ -2,15 +2,21 @@ package helpers
 
 import (
 	"fmt"
-
 	"github.com/gin-gonic/gin"
+	"os"
 )
 
+var printFlag = os.Getenv("ERROR_LOGGER")
+
 func printError(errorMessage string, path string, status int, c *gin.Context) {
-	fmt.Printf("\nERROR: %d\n", status)
-	fmt.Printf("	Path: @%s\n", path)
-	fmt.Printf("	Message: %s\n", errorMessage)
-	fmt.Printf("	Origin: %s", c.Request.URL)
+	if printFlag == "true" {
+		fmt.Printf("\nERROR: %d\n", status)
+		fmt.Printf("	Path: @%s\n", path)
+		fmt.Printf("	Message: %s\n", errorMessage)
+		fmt.Printf("	Origin: %s\n", c.Request.URL)
+	}
+
+	c.Set("errorMessage", errorMessage)
 }
 
 func NetworkError(c *gin.Context, errorMessage string, path string) {
