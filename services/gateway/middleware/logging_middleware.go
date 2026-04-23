@@ -37,8 +37,8 @@ func printLog(l Loggger) {
 	fmt.Printf("DURATION:   %dms\n", l.ResponseDuration)
 	fmt.Printf("IP:         %s\n", l.RequestIP)
 	fmt.Printf("USER-AGENT: %s\n", l.UserAgent)
-	fmt.Printf("REFERER:    %s\n", l.Referer)
-	fmt.Printf("ORIGIN:     %s\n", l.Origin)
+	// fmt.Printf("REFERER:    %s\n", l.Referer)
+	// fmt.Printf("ORIGIN:     %s\n", l.Origin)
 	if l.Message != nil {
 		fmt.Printf("Message:    %s\n", *l.Message)
 	}

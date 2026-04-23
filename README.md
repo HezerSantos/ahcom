@@ -82,7 +82,8 @@ The API is designed to support location-based queries, user-generated content, a
 | POST | /restaurants/:id/saved | Save restaurant to favorites by restaurant id (HERE ID) |
 | POST | /restaurants/:id/reviews | Create review for restaurant by restaurant id (UUID or HERE ID) |
 | DELETE | /reviews/:id | Delete review using review id |
-| DELETE | /reviews/:id/saved | Delete User Saved Restaurant using Restaurant ID |
+| DELETE | /restaurant/:id/saved | Delete User Saved Restaurant using Restaurant ID |
+| PATCH | /restaurant/:restaurantId/reviews/:reviewId | Update Review using Review ID based off of Restaurant ID |
 ---
 
 ## Get Restaurants
@@ -272,6 +273,39 @@ DELETE /restaurants/12765292-4fa5-570d-b769-822a344bed35/saved
         }
     },
     "message":"Item successfully deleted.",
+    "success":true
+}
+```
+
+---
+
+## Update Review
+```http
+PATCH /restaurants/12765292-4fa5-570d-b769-822a344bed36/reviews/019db652-579e-745a-af02-6fae93ac9660
+```
+
+#### Request Body
+```json
+{
+    "reviewMessage": "...",
+    "rating": "..."
+}
+```
+
+#### Response (Update Success)
+```json
+{
+    "attributes":{...},
+    "message":"Successfully updated review",
+    "success":true
+}
+```
+
+#### Response (Update Fail -- No Error)
+```json
+{
+    "attributes":null,
+    "message":"Nothing to Update",
     "success":true
 }
 ```
