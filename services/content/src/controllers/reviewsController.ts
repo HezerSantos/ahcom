@@ -1,9 +1,9 @@
 import { RequestHandler } from "express";
-import { createReviewValidator, getReviewsByRestaurantIdValidator } from "../validators/reviewValidator";
+import { createReviewValidator, getReviewsByRestaurantIdValidator, updateReviewByRestaurantIdValidator } from "../validators/reviewValidator";
 import { validationResult } from "express-validator";
 import { errorHelpers } from "../helpers/errorHelper";
 import { validate } from "uuid";
-import { AttributeValue, DeleteItemCommand, DeleteItemCommandInput, PutItemCommand, PutItemCommandInput, QueryCommand, QueryCommandInput } from "@aws-sdk/client-dynamodb";
+import { AttributeValue, DeleteItemCommand, DeleteItemCommandInput, GetItemCommand, GetItemCommandInput, PutItemCommand, PutItemCommandInput, QueryCommand, QueryCommandInput, UpdateItemCommand, UpdateItemCommandInput } from "@aws-sdk/client-dynamodb";
 import { v7 } from 'uuid'
 import dynamodbClient from "../services/dynamodbService";
 import { fetchRestaurantPOI } from "../helpers/restaurantPOIHelper";
@@ -274,6 +274,129 @@ export const getReviewsByRestaurantId: RequestHandler[] = [
                 return
             }
         } catch (error) {
+            next(error)
+        }
+    }
+]
+
+export const updateReviewByRestaurantId: RequestHandler[] = [
+    ...updateReviewByRestaurantIdValidator,
+     async(req, res, next) => {
+        try {
+            //Because reviewMessage and rating are optional. Manual check for req.body is required
+            if (!req.body){
+                errorHelpers.badRequestBodyError("REVIEW MESSAGE OR BODY RATING MISSING", __filename)
+            }
+
+            //Declare reviewMessage and reviewRating
+            const reviewMessage = req.body.reviewMessage ?? ""
+            const reviewRating = req.body.rating ?? ""
+
+            //Error check if both are not present
+            if ((!reviewMessage && !reviewRating)){
+                errorHelpers.badRequestBodyError("REVIEW MESSAGE OR BODY RATING MISSING", __filename)
+                return
+            }
+
+            //PK AND SK for GetItem
+            const restaurantId = req.params.restaurantId
+            const reviewId = req.params.reviewId
+
+            const errors = validationResult(req)
+            if (!errors.isEmpty()) {
+                errorHelpers.badRequestParamsError("RESOURCE IDS NOT VALID", __filename, errors.array())
+                return
+            }
+            
+            const getReviewByRestuarantIdItemInput: GetItemCommandInput = {
+                TableName: "AHCOM",
+                Key: {
+                    "PK": { S: `RESTAURANT#${restaurantId}` },
+                    "SK": { S:  `REVIEW#${reviewId}`}
+                }
+            }
+
+            const getReviewByRestuarantIdItemOutput = await dynamodbClient.send(new GetItemCommand(getReviewByRestuarantIdItemInput))
+
+            //If the Item doesnt exist, throw error
+            if (getReviewByRestuarantIdItemOutput.Item === undefined) {
+                errorHelpers.notFoundError("RESTAURANT OR REVIEW DOES NOT EXIST", __filename)
+                return
+            } 
+
+            //Forbidden check for ownership
+            if (getReviewByRestuarantIdItemOutput.Item.userId.S !== req.user?.id) {
+                errorHelpers.forbiddenError("CANNOT UPDATE NON OWNED REVIEW", __filename)
+                return
+            }
+
+            //Original values
+            const originalReviewMessage = getReviewByRestuarantIdItemOutput.Item.review.S
+            const originalRating = getReviewByRestuarantIdItemOutput.Item.rating.N
+
+            //Type check to remove undefined for both values
+            if (originalRating === undefined) {
+                errorHelpers.networkError("RATING FIELD ON REVIEW IS UNDEFINED", __filename)
+                return
+            }
+            if (originalReviewMessage === undefined) {
+                errorHelpers.networkError("REVIEW MESSAGE FIELD ON REVIEW IS UNDEFINED", __filename)
+                return
+            }
+
+            
+            let updateReviewInput: UpdateItemCommandInput = {
+                TableName: "AHCOM",
+                Key: {
+                    "PK": { S: `RESTAURANT#${restaurantId}` },
+                    "SK": { S:  `REVIEW#${reviewId}`}
+                },
+                ReturnValues: "UPDATED_NEW"
+            }
+
+            if (reviewMessage !== originalReviewMessage) {
+                updateReviewInput.UpdateExpression = "SET review = :newReview"
+                updateReviewInput.ExpressionAttributeValues = {
+                    ":newReview": { S: String(req.body.reviewMessage)}
+                }
+            }
+
+            if (reviewRating !== originalRating) {
+                updateReviewInput.UpdateExpression = "SET rating = :newRating"
+                updateReviewInput.ExpressionAttributeValues = {
+                    ":newRating": { N: String(req.body.rating)}
+                }
+            }
+
+            //If the UpdateExpression is not created,
+            //Then the old values have not changed
+            if ((reviewMessage === originalReviewMessage) && (reviewRating === originalRating)) {
+                res.status(200).json({
+                    "success": true,
+                    "message": "Nothing to Update",
+                    "attributes": null
+                })
+                return
+            }
+
+            //Probably will never run
+            if (updateReviewInput.UpdateExpression === undefined || updateReviewInput.ExpressionAttributeValues === undefined) {
+                errorHelpers.badRequestBodyError("REVIEW MESSAGE OR BODY RATING MISSING", __filename)
+                return
+            }
+
+            const updateResponse = await dynamodbClient.send(new UpdateItemCommand(updateReviewInput))
+
+            if (updateResponse.Attributes !== undefined) {
+                res.status(200).json({
+                    "success": true,
+                    "message": "Successfully updated review",
+                    "attributes": updateResponse.Attributes
+                })
+            } else { //Safety check. Probably will never run
+                errorHelpers.notFoundError("COULD NOT UPDATE REVIEW", __filename)
+            }
+        } catch(error) {
             next(error)
         }
     }

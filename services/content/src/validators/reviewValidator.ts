@@ -136,3 +136,31 @@ export const getReviewsByRestaurantIdValidator = [
             throw new Error("Restaurant Does Not Exist")
         })
 ]
+
+export const updateReviewByRestaurantIdValidator = [
+    param("restaurantId")
+        .notEmpty()
+        .isString()
+        .custom(id => {
+            if (!validate(id)) {
+                throw new Error("INVALID RESTAURANT ID")
+            }  
+            return true
+        }),
+    param("reviewId")
+        .notEmpty()
+        .isString()
+        .custom(id => {
+            if (!validate(id)){
+                throw new Error("INVALID REVIEW ID")
+            }
+            return true
+        }),
+    body("reviewMessage")
+        .optional({values: 'falsy'})
+        .trim()
+        .isLength({min: 1}).withMessage("Review must be more than one character"),
+    body("rating")
+        .optional({values: 'falsy'})
+        .notEmpty(),
+]
