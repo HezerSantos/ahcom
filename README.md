@@ -701,7 +701,7 @@ This GSI only includes RESTAURANT metadata items where:
 
 #### Hot Partition Shard Bucket
 Used to query ALL reviews and avoid Hot Partition
--Index Name: GSI1-index (Overloaded)
+- Index Name: GSI1-index (Overloaded)
 - GSI1_PK: `REVIEWSHARD#<shardNumber>`
 - GSI1_SK: `REVIEW#<reviewId>`
 
