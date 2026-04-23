@@ -68,6 +68,7 @@ The API is designed to support location-based queries, user-generated content, a
 # API GUIDE
 ### Gateway
 | METHOD | PATH | DESCRIPTION |
+| --- | --- | --- |
 | Any | /api/content/*routePath | Handles Content Service |
 | Any | /api/identity/*routePath | Handles Identity Service |
 
