@@ -322,6 +322,8 @@ PATCH /restaurants/12765292-4fa5-570d-b769-822a344bed36/reviews/019db652-579e-74
 | POST | /auth/logout | Deletes JWT from user |
 | GET | /users/me | Gets Current User info |
 | GET | /users/:id | Get User By ID |
+| PATCH | /users/me/profile | Update User Profile |
+| PATCH | /users/me/settings | Updates User Settings |
 
 
 ## Login User
