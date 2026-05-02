@@ -1,0 +1,183 @@
+.landing-navigation-bar{
+  padding-top: 3rem;
+  padding-inline: 3rem;
+  background-color: var(--secondary-color);
+  height: 12rem;
+  box-shadow: 0px 5px 5px grey;
+  display: grid;
+  grid-template-columns: 20% 1fr 20%;
+}
+
+.landing-navigation-logo{
+  
+  & > div {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    & > h1{
+      color: var(--primary-color);
+    }
+    & > img{
+      width: 3rem;
+      height: 3rem;
+    }  
+  }
+}
+
+.landing-navigation-interact{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+
+  & > ul {
+    display: flex;
+    list-style-type: none;
+    gap: 3rem;
+
+    & a {
+      text-decoration: none;
+      color: var(--semi-dark-text-color);
+    }
+  }
+
+  & > div {
+    width: 85%;
+    height: 4.25rem;
+    background-color: white;
+    border-radius: 5rem;
+    box-shadow: 0 0 10px grey;
+    display: grid;
+    align-content: center;
+    grid-template-columns: 1fr 1fr;
+
+    & > div:nth-of-type(1){
+      padding-left: 1rem;
+    }
+
+    & > div > div {
+      display: flex;
+      flex-direction: column;
+
+      & > input {
+        width: 80%;
+      }
+      & > input, & > select {
+        color: var(--semi-dark-text-color);
+        font-size: .9rem;
+        height: 1.5rem;
+        border: none;
+
+        &:focus{
+          outline: none;
+        }
+      }
+
+      & > select {
+        width: max-content;
+        cursor: pointer;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none; /* Removes default browser styling */
+        padding-left: 0;
+        text-align: left;
+      }
+    }
+
+    & > div:nth-of-type(2){
+      border-left: 1.5px solid grey;
+      padding-left: 1rem;
+      display: flex;
+      justify-content: space-between;
+      padding-right: 1rem;
+
+      & > button{
+        width: 2.5rem;
+        height: 2.5rem;
+        background-color: var(--primary-color);
+        border: none;
+        border-radius: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        & > svg {
+          width: 50%;
+          height: 50%;
+          color: white;
+        }
+      }
+    }
+  }
+}
+
+.switch {
+  /* Local variables scoped ONLY to this switch */
+  --sw-w: 50px;
+  --sw-h: 26px;
+  --sl-size: 18px;
+  --bg-off: var(--semi-dark-text-color);
+  --bg-on: var(--primary-color);
+
+  position: relative;
+  display: inline-block;
+  width: var(--sw-w);
+  height: var(--sw-h);
+
+  /* Nesting the input logic */
+  & input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+
+    /* Nesting the checked state using & */
+    &:checked + .slider {
+      background-color: var(--bg-on);
+
+      &::before {
+        transform: translateX(calc(var(--sw-w) - var(--sl-size) - 8px));
+      }
+    }
+
+    &:focus-visible + .slider {
+      box-shadow: 0 0 0 2px white, 0 0 0 4px var(--bg-on);
+    }
+  }
+
+  /* Nesting the slider visual */
+  & .slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0; /* Shortcut for top/bottom/left/right: 0 */
+    background-color: var(--bg-off);
+    transition: 0.4s;
+    border-radius: 34px;
+
+    &::before {
+      position: absolute;
+      content: "";
+      height: var(--sl-size);
+      width: var(--sl-size);
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+  }
+}
+
+.landing-navigation-base{
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  & > button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #DDDDDD;
+    height: 2rem;
+    width: 2rem;
+    border-radius: 2rem;
+    border: none;
+  }
+}
