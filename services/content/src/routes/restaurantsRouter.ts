@@ -7,7 +7,7 @@ import { createReview, getReviewsByRestaurantId, updateReviewByRestaurantId } fr
 
 const restaurantsRouter = Router()
 
-restaurantsRouter.get("/", passportAuthenticate(), getRestaurantPOIs)
+restaurantsRouter.get("/", getRestaurantPOIs)
 restaurantsRouter.post("/:id/saved", passportAuthenticate(), saveRestaurantPOI)
 restaurantsRouter.post("/:id/reviews", passportAuthenticate(), createReview)
 restaurantsRouter.get("/:id/reviews", passportAuthenticate(), getReviewsByRestaurantId)

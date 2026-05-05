@@ -50,7 +50,7 @@ const haversine: HaverSineType = (lat1, lon1, lat2, lon2) => {
 /**
  * Fetch POIs from HERE with grid-based caching
  */
-export const fetchPOIs: FetchPOIsType = async(lat, lon, radius = 1000, categories = '100-1000', limit = 20) => {
+export const fetchPOIs: FetchPOIsType = async(lat, lon, radius = 1000, categories = '100-1000', limit = 50) => {
     // Get tile coordinates
     const [x, y] = getTile(lat, lon)
     const allNearbyResults = [];

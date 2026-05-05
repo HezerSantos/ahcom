@@ -27,7 +27,6 @@ var microServiceMap = map[string]string{
 }
 
 func parseMicroServiceUrl(path string) *string {
-
 	splitPaths := strings.Split(path[1:], "/")
 	if len(splitPaths) <= 2 {
 		return nil
@@ -49,7 +48,7 @@ func parseMicroServiceUrl(path string) *string {
 	return &finalUrl
 }
 func AnyHandler(c *gin.Context) {
-	microServiceUrl := parseMicroServiceUrl(c.Request.URL.Path)
+	microServiceUrl := parseMicroServiceUrl(c.Request.RequestURI)
 	if microServiceUrl == nil {
 		helpers.NotFoundError(c, "PATH NOT FOUND", "/api")
 		return

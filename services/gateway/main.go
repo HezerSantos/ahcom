@@ -1,6 +1,7 @@
 package main
 
 import (
+	"gateway/middleware"
 	"gateway/routes"
 
 	"github.com/gin-gonic/gin"
@@ -40,6 +41,7 @@ func main() {
 
 	r := gin.New()
 	r.SetTrustedProxies(trustedProxies)
+	r.Use(middleware.CorsMiddleware)
 
 	api := r.Group("/api")
 
