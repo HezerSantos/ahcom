@@ -32,59 +32,66 @@ const SCORE_MAP = new Map<string, number>([
   ["100-1100-0000", 60],  // Coffee-Tea (generic)
 ]);
 
-function latLngToTile(lat: number, lng: number, zoom: number) {
-  const n = Math.pow(2, zoom);
+// function latLngToTile(lat: number, lng: number, zoom: number) {
+//   const n = Math.pow(2, zoom);
 
-  const x = Math.floor(((lng + 180) / 360) * n);
+//   const x = Math.floor(((lng + 180) / 360) * n);
 
-  const latRad = lat * Math.PI / 180;
-  const y = Math.floor(
-    (1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n
-  );
+//   const latRad = lat * Math.PI / 180;
+//   const y = Math.floor(
+//     (1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n
+//   );
 
-  return `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`
-}
+//   return `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`
+// }
 
-const calculatePOIScore = (item: any, meter: number, explore = false) => {
+const calculatePOIScore = (item: any, mode: 'best' | 'quick' | 'explore') => {
     const distance = item.distance as number
+    // Normalize distance. If you don't divide by 1000, 
+    // the distance penalty swallows the category score whole.
+    const distKm = distance / 1000; 
+
     const categories = item.categories as any[]
-    const primaryCategory = categories.filter(item => item.primary)[0]
+    const primaryCategory = categories.find(c => c.primary) || categories[0] || { id: 'default' };
 
-    let categoryScore = (SCORE_MAP.get(primaryCategory.id) ?? 50) - ((distance / 1000) * meter)
+    let score = SCORE_MAP.get(primaryCategory.id) ?? 50;
 
-    if (explore) {
-        if (primaryCategory.id === "100-1000-0002" || primaryCategory.id === "100-1000-0005") {
-            categoryScore += 10
-        } else {
-            categoryScore -= 10
-        }
-        return [categoryScore, item]
-    } else {
-        return [categoryScore, item]
+    // Quality boosts
+    if (item.references?.length > 1) score += 15; 
+    if (item.contacts?.[0]?.www) score += 5;
+
+    switch (mode) {
+        case 'quick':
+            // High penalty for distance, bonus for fast food
+            score -= (distKm * 40); 
+            if (["100-1000-0009", "100-1000-0003"].includes(primaryCategory.id)) score += 20;
+            break;
+
+        case 'explore':
+            // Low penalty for distance, bonus for fine dining
+            score -= (distKm * 10);
+            if (primaryCategory.id === "100-1000-0002") score += 25; 
+            break;
+
+        case 'best':
+        default:
+            // Medium penalty
+            score -= (distKm * 20);
+            break;
     }
-    
-}
-const processPOIResults = (results: any[]): Record<string, any[]> => {
-    const best = results.map(item => calculatePOIScore(item, 18)) as any []
-    const quick = results.map(item => calculatePOIScore(item, 35)) as any[]
-    const explore = results.map(item => calculatePOIScore(item, 5, true)) as any[]
 
-    const bestWithImage = best.map(item => {
-        const newItem = {...item[1], imageUrl: latLngToTile(item[1].position.lat, item[1].position.lng, 18)}
-        return [item[0], newItem]
-    })
-    const quickWithImage = quick.map(item => {
-        const newItem = {...item[1], imageUrl: latLngToTile(item[1].position.lat, item[1].position.lng, 18)}
-        return [item[0], newItem]
-    })
-    const exploreWithImage = explore.map(item => {
-        const newItem = {...item[1], imageUrl: latLngToTile(item[1].position.lat, item[1].position.lng, 18)}
-        return [item[0], newItem]
-    })
+    return [score, item]
+}
+
+const processPOIResults = (results: any[]): Record<string, any[]> => {
+    const best = results.map(item => calculatePOIScore(item, 'best')) as any []
+    const quick = results.map(item => calculatePOIScore(item, 'quick')) as any[]
+    const explore = results.map(item => calculatePOIScore(item, 'explore')) as any[]
+
     return {
-        "best": bestWithImage.sort((a, b) => b[0] - a[0]).slice(0,6),
-        "quick": quickWithImage.sort((a, b) => b[0] - a[0]).slice(0,4),
-        "explore": exploreWithImage.sort((a, b) => b[0] - a[0]).slice(0,8)
+        "best": best.sort((a, b) => b[0] - a[0]).slice(0,20),
+        "quick": quick.sort((a, b) => b[0] - a[0]).slice(0,15),
+        "explore": explore.sort((a, b) => b[0] - a[0]).slice(0,30)
     }
 }
 

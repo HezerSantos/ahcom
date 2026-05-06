@@ -1,5 +1,4 @@
 import { PageSection, PageSectionChild } from "../universal/PageSection"
-import test from '../../../test/test.png'
 import { Carousel, CarouselItem } from "../universal/Carousel"
 import RestaurantItem from "./RestaurantItem"
 import PoiResultsType from "../../types/poiResultsType"
@@ -18,9 +17,9 @@ const DiscoverSection: React.FC<DiscoverSectionProps> = ({restaurantData}) => {
                                 <CarouselItem key={i}>
                                     <RestaurantItem 
                                         name={item[1].title}
-                                        distance={Math.ceil(item[1].distance * 0.000621371)}
-                                        image={item[1].imageUrl}
-                                        rating={3}
+                                        distance={item[1].distance * 0.000621371}
+                                        rating={undefined}
+                                        position={item[1].position}
                                     />
                                 </CarouselItem>
                             )
@@ -32,9 +31,9 @@ const DiscoverSection: React.FC<DiscoverSectionProps> = ({restaurantData}) => {
                                 <CarouselItem key={i}>
                                     <RestaurantItem 
                                         name={item[1].title}
-                                        distance={Math.ceil(item[1].distance * 0.000621371)}
-                                        image={item[1].imageUrl}
-                                        rating={3}
+                                        distance={item[1].distance * 0.000621371}
+                                        rating={undefined}
+                                        position={item[1].position}
                                     />
                                 </CarouselItem>
                             )
@@ -46,9 +45,9 @@ const DiscoverSection: React.FC<DiscoverSectionProps> = ({restaurantData}) => {
                                 <CarouselItem key={i}>
                                     <RestaurantItem 
                                         name={item[1].title}
-                                        distance={Math.ceil(item[1].distance * 0.000621371)}
-                                        image={item[1].imageUrl}
-                                        rating={3}
+                                        distance={item[1].distance * 0.000621371}
+                                        rating={undefined}
+                                        position={item[1].position}
                                     />
                                 </CarouselItem>
                             )

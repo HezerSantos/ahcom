@@ -69,3 +69,21 @@ button{
   width: 100%;
 }
 
+.footer{
+  background-color: var(--semi-dark-text-color);
+  padding-inline: 3rem;
+  padding-block: 3rem;
+  display: flex;
+  justify-content: space-between;
+  color: white;
+  & > ul {
+    display: flex;
+    gap: .5rem;
+    list-style-type: none;
+
+    & a{
+      text-decoration: none;
+      color: white;
+    }
+  }
+}

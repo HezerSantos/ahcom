@@ -3,6 +3,7 @@ import LandingNavigationBar from "../components/universal/LandingNavigationBar"
 import DiscoverSection from "../components/landingpage/DiscoverSection"
 import axios from "axios"
 import PoiResultsType from "../types/poiResultsType"
+import Footer from "../components/universal/Footer"
 
 const fetchRestaurantPOIs = async(setRestaurantData: React.Dispatch<SetStateAction<any>>) => {
     try{
@@ -24,6 +25,7 @@ const LandingPage: React.FC = () => {
         <>
             <LandingNavigationBar />
             <DiscoverSection restaurantData={restaurantData}/>
+            <Footer />
         </>
     )
 }
